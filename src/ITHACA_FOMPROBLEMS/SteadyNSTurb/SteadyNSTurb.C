@@ -675,6 +675,30 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
         {
             gTensor = divMomentum(NUmodes, NPmodes);
         }
+        
+        word ct1PPE_str = "ct1PPE_" + name(liftfield.size()) + "_" + name(NUmodes) + "_" +
+                          name(NSUPmodes) + "_" + name(NPmodes) + "_" + name(nNutModes) + "_t";
+
+        if (ITHACAutilities::check_file("./ITHACAoutput/Matrices/" + ct1PPE_str))
+        {
+            ITHACAstream::ReadDenseTensor(ct1PPETensor, "./ITHACAoutput/Matrices/", ct1PPE_str);
+        }
+        else
+        {
+            ct1PPETensor = turbulencePPETensor1(NUmodes, NSUPmodes, NPmodes, nNutModes);
+        }
+
+        word ct2PPE_str = "ct2PPE_" + name(liftfield.size()) + "_" + name(NUmodes) + "_" +
+                          name(NSUPmodes) + "_" + name(NPmodes) + "_" + name(nNutModes) + "_t";
+
+        if (ITHACAutilities::check_file("./ITHACAoutput/Matrices/" + ct2PPE_str))
+        {
+            ITHACAstream::ReadDenseTensor(ct2PPETensor, "./ITHACAoutput/Matrices/", ct2PPE_str);
+        }
+        else
+        {
+            ct2PPETensor = turbulencePPETensor2(NUmodes, NSUPmodes, NPmodes, nNutModes);
+        }
 
         if (bcMethod == "penalty")
         {
@@ -684,32 +708,6 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
     }
     else
     {
-        L_U_SUPmodes.resize(0);
-
-        if (liftfield.size() != 0)
-        {
-            for (label k = 0; k < liftfield.size(); k++)
-            {
-                L_U_SUPmodes.append(liftfield[k].clone());
-            }
-        }
-
-        if (NUmodes != 0)
-        {
-            for (label k = 0; k < NUmodes; k++)
-            {
-                L_U_SUPmodes.append(Umodes[k].clone());
-            }
-        }
-
-        if (NSUPmodes != 0)
-        {
-            for (label k = 0; k < NSUPmodes; k++)
-            {
-                L_U_SUPmodes.append(supmodes[k].clone());
-            }
-        }
-
         B_matrix = diffusive_term(NUmodes, NPmodes, NSUPmodes);
         C_tensor = convective_term_tens(NUmodes, NPmodes, NSUPmodes);
         K_matrix = pressure_gradient_term(NUmodes, NPmodes, NSUPmodes);
