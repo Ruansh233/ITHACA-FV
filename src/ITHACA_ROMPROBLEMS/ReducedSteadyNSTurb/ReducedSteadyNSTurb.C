@@ -109,44 +109,29 @@ int newtonSteadyNSTurbSUP::operator()(const Eigen::VectorXd& x,
         }
     }
 
-    if (problem->viscCoeff == "RBF")
+    if (problem->rbfParams == "params")
+    {            
+    }
+    else if (problem->rbfParams == "vel")
     {
-        if (problem->rbfParams == "params")
-        {            
-        }
-        else if (problem->rbfParams == "vel")
+        for (int i = 0; i < nphiNut; i++)
         {
-            for (int i = 0; i < nphiNut; i++)
-            {
-                Eigen::MatrixXd coeffL2_tmp = aTmp.middleRows(problem->liftfield.size(), problem->NUmodes);
-                if (problem->rbfScaler) {
-                    Eigen::VectorXd scaledInputs = (coeffL2_tmp - problem->inputScaler.col(0)).array() /
-                                                    (problem->inputScaler.col(1) - problem->inputScaler.col(0)).array();
-                    gNut(i) = problem->rbfSplines[i]->eval(scaledInputs);
-                } else {
-                    gNut(i) = problem->rbfSplines[i]->eval(coeffL2_tmp);
-                }
-            }
+            Eigen::VectorXd coeffL2_tmp = aTmp.middleRows(problem->liftfield.size(), problem->NUmodes);
+            gNut(i) = problem->rbfSplines[i]->predict(coeffL2_tmp);
         }
-        else if (problem->rbfParams == "velLift")
+    }
+    else if (problem->rbfParams == "velLift")
+    {
+        for (int i = 0; i < nphiNut; i++)
         {
-            for (int i = 0; i < nphiNut; i++)
-            {
-                Eigen::MatrixXd coeffL2_tmp = aTmp.topRows(problem->liftfield.size() + problem->NUmodes);
-                if (problem->rbfScaler) {
-                    Eigen::VectorXd scaledInputs = (coeffL2_tmp - problem->inputScaler.col(0)).array() /
-                                                    (problem->inputScaler.col(1) - problem->inputScaler.col(0)).array();
-                    gNut(i) = problem->rbfSplines[i]->eval(scaledInputs);
-                } else {
-                    gNut(i) = problem->rbfSplines[i]->eval(coeffL2_tmp);
-                }
-            }
+            Eigen::VectorXd coeffL2_tmp = aTmp.topRows(problem->liftfield.size() + problem->NUmodes);
+            gNut(i) = problem->rbfSplines[i]->predict(coeffL2_tmp);
         }
-        else
-        {
-            FatalError << "Unknown rbfParams type: " << problem->rbfParams << endl;
-            FatalError.exit();
-        }
+    }
+    else
+    {
+        FatalError << "Unknown rbfParams type: " << problem->rbfParams << endl;
+        FatalError.exit();
     }
 
     for (int i = 0; i < Nphi_u; i++)
@@ -221,46 +206,29 @@ int newtonSteadyNSTurbPPE::operator()(const Eigen::VectorXd& x,
         }
     }
 
-    if (problem->viscCoeff == "RBF")
+    if (problem->rbfParams == "params")
+    {            
+    }
+    else if (problem->rbfParams == "vel")
     {
-        if (problem->rbfParams == "params")
-        {            
-        }
-        else if (problem->rbfParams == "vel")
+        for (int i = 0; i < nphiNut; i++)
         {
-            for (int i = 0; i < nphiNut; i++)
-            {
-                Eigen::MatrixXd coeffL2_tmp = aTmp.middleRows(problem->liftfield.size(), problem->NUmodes);
-                if (problem->rbfScaler) {
-                    Eigen::VectorXd scaledInputs = (coeffL2_tmp - problem->inputScaler.col(0)).array() /
-                                                    (problem->inputScaler.col(1) - problem->inputScaler.col(0)).array();
-
-                    gNut(i) = problem->rbfSplines[i]->eval(scaledInputs);
-                } else {
-                    gNut(i) = problem->rbfSplines[i]->eval(coeffL2_tmp);
-                }
-            }
+            Eigen::VectorXd coeffL2_tmp = aTmp.middleRows(problem->liftfield.size(), problem->NUmodes);
+            gNut(i) = problem->rbfSplines[i]->predict(coeffL2_tmp);
         }
-        else if (problem->rbfParams == "velLift")
+    }
+    else if (problem->rbfParams == "velLift")
+    {
+        for (int i = 0; i < nphiNut; i++)
         {
-            for (int i = 0; i < nphiNut; i++)
-            {
-                Eigen::MatrixXd coeffL2_tmp = aTmp.topRows(problem->liftfield.size() + problem->NUmodes);
-                if (problem->rbfScaler) {
-                    Eigen::VectorXd scaledInputs = (coeffL2_tmp - problem->inputScaler.col(0)).array() /
-                                                    (problem->inputScaler.col(1) - problem->inputScaler.col(0)).array();
-
-                    gNut(i) = problem->rbfSplines[i]->eval(scaledInputs);
-                } else {
-                    gNut(i) = problem->rbfSplines[i]->eval(coeffL2_tmp);
-                }
-            }
+            Eigen::VectorXd coeffL2_tmp = aTmp.topRows(problem->liftfield.size() + problem->NUmodes);
+            gNut(i) = problem->rbfSplines[i]->predict(coeffL2_tmp);
         }
-        else
-        {
-            FatalError << "Unknown rbfParams type: " << problem->rbfParams << endl;
-            FatalError.exit();
-        }
+    }
+    else
+    {
+        FatalError << "Unknown rbfParams type: " << problem->rbfParams << endl;
+        FatalError.exit();
     }
 
     for (int i = 0; i < Nphi_u; i++)

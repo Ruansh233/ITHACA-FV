@@ -134,6 +134,9 @@ class SteadyNSTurb: public steadyNS
         /// The way to compute the eddy viscosity snapshots
         dictionary viscRBFdict;
 
+        /// The type of RBF parameters to use
+        word rbfParams;
+
         /// Number of viscoisty modes used for the projection
         label nNutModes;
 
@@ -238,18 +241,6 @@ class SteadyNSTurb: public steadyNS
                 label NSUPmodes, label nNutModes);
 
         //--------------------------------------------------------------------------
-        /// @brief      ct1 tensor for the turbulence treatement using the cached procedure and reduced memory usage
-        ///
-        /// @param[in]  NUmodes    The number of velocity modes.
-        /// @param[in]  NSUPmodes  The number of supremizer modes.
-        /// @param[in]  nNutModes  The number of eddy viscosity modes.
-        ///
-        /// @return     ct1 tensor for the turbulence treatement
-        ///
-        Eigen::Tensor<double, 3 > turbulenceTensor1_cache_mem(label NUmodes,
-                label NSUPmodes, label nNutModes);
-
-        //--------------------------------------------------------------------------
         /// @brief      Method to compute one of the turbulence eddy viscosity tensors
         ///
         /// @param[in]  NUmodes    The number of velocity modes.
@@ -335,31 +326,6 @@ class SteadyNSTurb: public steadyNS
         /// @return     ct2PPE tensor for the turbulence treatement in the PPE method
         ///
         Eigen::Tensor<double, 3 > turbulencePPETensor2_cache(label NUmodes,
-                label NSUPmodes, label NPmodes, label nNutModes);
-        //--------------------------------------------------------------------------
-        /// @brief      ct2PPE added tensor for the turbulence treatement in the PPE method using the cached procedure
-        ///
-        /// @param[in]  NUmodes    The number of velocity modes.
-        /// @param[in]  NSUPmodes  The number of supremizer modes.
-        /// @param[in]  NPmodes    The number of pressure modes.
-        /// @param[in]  nNutModes  The number of eddy viscosity modes.
-        ///
-        /// @return     ct2PPE tensor for the turbulence treatement in the PPE method
-        ///
-        Eigen::Tensor<double, 3 > turbulencePPETensor2_cache(label NUmodes,
-                label NSUPmodes, label NPmodes, label nNutModes);
-
-        //--------------------------------------------------------------------------
-        /// @brief      ct2PPE added tensor for the turbulence treatement in the PPE method using the cached procedure and reduced memory usage
-        ///
-        /// @param[in]  NUmodes    The number of velocity modes.
-        /// @param[in]  NSUPmodes  The number of supremizer modes.
-        /// @param[in]  NPmodes    The number of pressure modes.
-        /// @param[in]  nNutModes  The number of eddy viscosity modes.
-        ///
-        /// @return     ct2PPE tensor for the turbulence treatement in the PPE method
-        ///
-        Eigen::Tensor<double, 3 > turbulencePPETensor2_cache_mem(label NUmodes,
                 label NSUPmodes, label NPmodes, label nNutModes);
 
         //--------------------------------------------------------------------------

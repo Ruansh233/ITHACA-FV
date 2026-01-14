@@ -509,58 +509,6 @@ Eigen::MatrixXd SteadyNSTurb::btTurbulence(label NUmodes, label NSUPmodes)
     return btMatrix;
 }
 
-SPLINTER::RadialBasisFunctionType SteadyNSTurb::getRBFType(const word& viscCoeff, const word& rbfKernel)
-{
-    if (viscCoeff == "RBF")
-    {
-        if (rbfKernel == "linear")
-        {
-            return SPLINTER::RadialBasisFunctionType::LINEAR;
-        }
-        else if (rbfKernel == "thinPlate")
-        {
-            return SPLINTER::RadialBasisFunctionType::THIN_PLATE_SPLINE;
-        }
-        else if (rbfKernel == "multiQuadric")
-        {
-            return SPLINTER::RadialBasisFunctionType::MULTIQUADRIC;
-        }
-        else if (rbfKernel == "inverseQuadric")
-        {
-            return SPLINTER::RadialBasisFunctionType::INVERSE_MULTIQUADRIC;
-        }
-        else if (rbfKernel == "inverseMultiQuadric")
-        {
-            return SPLINTER::RadialBasisFunctionType::INVERSE_MULTIQUADRIC;
-        }
-        else if (rbfKernel == "gaussian")
-        {
-            return SPLINTER::RadialBasisFunctionType::GAUSSIAN;
-        }
-        else if (rbfKernel == "cubic")
-        {
-            return SPLINTER::RadialBasisFunctionType::CUBIC;
-        }
-        else if (rbfKernel == "quintic")
-        {
-            return SPLINTER::RadialBasisFunctionType::QUINTIC;
-        }
-        else
-        {
-            Info<< "Available RBF kernels are: linear, thinPlate, multiQuadric, "
-                << "inverseQuadric, inverseMultiQuadric, gaussian, cubic, quintic." << endl;
-            Info<< "Current rbfKernel is: " << rbfKernel << endl;
-            FatalError << "Unknown RBF kernel type: " << rbfKernel << endl;
-            FatalError.exit();
-        }
-    }
-    else
-    {
-        FatalError << "Unknown viscCoeff type: " << viscCoeff << endl;
-        FatalError.exit();
-    }
-}
-
 List <Eigen::MatrixXd> SteadyNSTurb::bcPenaltyLiftMat(label NL_U_SUPmodes,
         label NLiftmodes)
 {
@@ -724,7 +672,7 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
         }
         else
         {
-            C_tensor = convective_term_tens_cache_mem(NUmodes, NPmodes, NSUPmodes);
+            C_tensor = convective_term_tens_cache(NUmodes, NPmodes, NSUPmodes);
         }
 
         word ct1Str = "ct1_" + name(liftfield.size()) + "_" + name(
@@ -737,7 +685,7 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
         }
         else
         {
-            ct1Tensor = turbulenceTensor1_cache_mem(NUmodes, NSUPmodes, nNutModes);
+            ct1Tensor = turbulenceTensor1_cache(NUmodes, NSUPmodes, nNutModes);
         }
 
         word ct2Str = "ct2_" + name(liftfield.size()) + "_" + name(
@@ -750,7 +698,7 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
         }
         else
         {
-            ct2Tensor = turbulenceTensor2_cache_mem(NUmodes, NSUPmodes, nNutModes);
+            ct2Tensor = turbulenceTensor2_cache(NUmodes, NSUPmodes, nNutModes);
         }
 
         word G_str = "G_" + name(liftfield.size()) + "_" + name(NUmodes) + "_" + name(
@@ -774,7 +722,7 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
         }
         else
         {
-            ct1PPETensor = turbulencePPETensor1_cache_mem(NUmodes, NSUPmodes, NPmodes, nNutModes);
+            ct1PPETensor = turbulencePPETensor1_cache(NUmodes, NSUPmodes, NPmodes, nNutModes);
         }
 
         word cth2PPE_str = "ct2PPE_" + name(liftfield.size()) + "_" + name(
@@ -786,7 +734,7 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
         }
         else
         {
-            ct2PPETensor = turbulencePPETensor2_cache_mem(NUmodes, NSUPmodes, NPmodes, nNutModes);
+            ct2PPETensor = turbulencePPETensor2_cache(NUmodes, NSUPmodes, NPmodes, nNutModes);
         }
 
         if (bcMethod == "penalty")
@@ -804,7 +752,7 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
     else
     {
         B_matrix = diffusive_term(NUmodes, NPmodes, NSUPmodes);
-        C_tensor = convective_term_tens_cache_mem(NUmodes, NPmodes, NSUPmodes);
+        C_tensor = convective_term_tens_cache(NUmodes, NPmodes, NSUPmodes);
         K_matrix = pressure_gradient_term(NUmodes, NPmodes, NSUPmodes);
         M_matrix = mass_term(NUmodes, NPmodes, NSUPmodes);
         D_matrix = laplacian_pressure(NPmodes);
@@ -812,10 +760,10 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
         btMatrix = btTurbulence(NUmodes, NSUPmodes);
         BC3_matrix = pressure_BC3(NUmodes, NPmodes);
         // BC4_matrix = pressure_BC4(NUmodes, NPmodes);
-        ct1Tensor = turbulenceTensor1_cache_mem(NUmodes, NSUPmodes, nNutModes);
-        ct2Tensor = turbulenceTensor2_cache_mem(NUmodes, NSUPmodes, nNutModes);
-        ct1PPETensor = turbulencePPETensor1_cache_mem(NUmodes, NSUPmodes, NPmodes, nNutModes);
-        ct2PPETensor = turbulencePPETensor2_cache_mem(NUmodes, NSUPmodes, NPmodes, nNutModes);
+        ct1Tensor = turbulenceTensor1_cache(NUmodes, NSUPmodes, nNutModes);
+        ct2Tensor = turbulenceTensor2_cache(NUmodes, NSUPmodes, nNutModes);
+        ct1PPETensor = turbulencePPETensor1_cache(NUmodes, NSUPmodes, NPmodes, nNutModes);
+        ct2PPETensor = turbulencePPETensor2_cache(NUmodes, NSUPmodes, NPmodes, nNutModes);
 
         if (bcMethod == "penalty")
         {
@@ -911,6 +859,8 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
     // Get the coeffs for interpolation (the orthonormal one is used because basis are orthogonal)
     coeffL2 = ITHACAutilities::getCoeffs(nutFields,
                                          nutModes, nNutModes);
+    
+    rbfParams = viscRBFdict.get<word>("rbfParams");
     // coefficients for U and p modes are computed in the tutorial codes  
     if (rbfParams == "velLift")
     {
@@ -969,12 +919,7 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
         }
     }
 
-    samples.resize(nNutModes);
-    rbfSplines.resize(nNutModes);
-    Eigen::MatrixXd weights;
     Eigen::MatrixXd inputs;
-
-    Info<< "The RBF kernel type is: " << rbfKernel << endl;
 
     if (rbfParams == "vel")
     {
@@ -1015,28 +960,8 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
         FatalError.exit();
     }
 
-    if (rbfScaler)
-    {
-        // Compute row-wise min and max
-        Eigen::VectorXd rowMins = inputs.rowwise().minCoeff();
-        Eigen::VectorXd rowMaxs = inputs.rowwise().maxCoeff();
-        Eigen::VectorXd range   = rowMaxs - rowMins;
-
-        // Check for zero ranges
-        if ((range.array().abs() < 1e-12).any()) {
-            FatalErrorInFunction
-                << "Some rows have zero range, cannot scale."
-                << abort(FatalError);
-        }
-
-        // Store min/max
-        inputScaler.resize(inputs.rows(), 2);
-        inputScaler.col(0) = rowMins;
-        inputScaler.col(1) = rowMaxs;
-
-        // Vectorized scaling
-        inputs = (inputs.colwise() - rowMins).array().colwise() / range.array();
-    }        
+    // Create RBF interpolators for nut coefficient interpolation
+    rbfSplines.resize(nNutModes);
 
     for (label i = 0; i < nNutModes; i++)
     {
@@ -1045,7 +970,7 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
         
         // Prepare training data: X is parameter matrix (transposed), y is coefficient vector
         Eigen::MatrixXd X = mu.transpose();  // Now each row is a parameter sample
-        Eigen::VectorXd y = coeffL2.row(i).transpose();  // Coefficient vector for this mode
+        Eigen::VectorXd y = inputs.row(i).transpose();  // Coefficient vector for this mode
         
         rbfSplines[i]->fit(X, y);
         
@@ -1160,7 +1085,7 @@ void SteadyNSTurb::projectSUP(fileName folder, label NU, label NP, label NSUP,
         }
         else
         {
-            C_tensor = convective_term_tens_cache_mem(NUmodes, NPmodes, NSUPmodes);
+            C_tensor = convective_term_tens_cache(NUmodes, NPmodes, NSUPmodes);
         }
 
         word ct1Str = "ct1_" + name(liftfield.size()) + "_" + name(
@@ -1173,7 +1098,7 @@ void SteadyNSTurb::projectSUP(fileName folder, label NU, label NP, label NSUP,
         }
         else
         {
-            ct1Tensor = turbulenceTensor1_cache_mem(NUmodes, NSUPmodes, nNutModes);
+            ct1Tensor = turbulenceTensor1_cache(NUmodes, NSUPmodes, nNutModes);
         }
 
         word ct2Str = "ct2_" + name(liftfield.size()) + "_" + name(
@@ -1186,7 +1111,7 @@ void SteadyNSTurb::projectSUP(fileName folder, label NU, label NP, label NSUP,
         }
         else
         {
-            ct2Tensor = turbulenceTensor2_cache_mem(NUmodes, NSUPmodes, nNutModes);
+            ct2Tensor = turbulenceTensor2_cache(NUmodes, NSUPmodes, nNutModes);
         }
 
         if (bcMethod == "penalty")
@@ -1204,13 +1129,13 @@ void SteadyNSTurb::projectSUP(fileName folder, label NU, label NP, label NSUP,
     else
     {
         B_matrix = diffusive_term(NUmodes, NPmodes, NSUPmodes);
-        C_tensor = convective_term_tens_cache_mem(NUmodes, NPmodes, NSUPmodes);
+        C_tensor = convective_term_tens_cache(NUmodes, NPmodes, NSUPmodes);
         K_matrix = pressure_gradient_term(NUmodes, NPmodes, NSUPmodes);
         P_matrix = divergence_term(NUmodes, NPmodes, NSUPmodes);
         M_matrix = mass_term(NUmodes, NPmodes, NSUPmodes);
         btMatrix = btTurbulence(NUmodes, NSUPmodes);
-        ct1Tensor = turbulenceTensor1_cache_mem(NUmodes, NSUPmodes, nNutModes);
-        ct2Tensor = turbulenceTensor2_cache_mem(NUmodes, NSUPmodes, nNutModes);
+        ct1Tensor = turbulenceTensor1_cache(NUmodes, NSUPmodes, nNutModes);
+        ct2Tensor = turbulenceTensor2_cache(NUmodes, NSUPmodes, nNutModes);
 
         if (bcMethod == "penalty")
         {
@@ -1279,6 +1204,7 @@ void SteadyNSTurb::projectSUP(fileName folder, label NU, label NP, label NSUP,
     coeffL2 = ITHACAutilities::getCoeffs(nutFields,
                                          nutModes, nNutModes); 
     // coefficients for U and p modes are computed in the tutorial codes  
+    rbfParams = viscRBFdict.get<word>("rbfParams");
     if (rbfParams == "velLift")
     {
         // check if the cols of the three matrices: coeffL2, coeffL2_U and coeffL2_lift, are the same,
@@ -1337,8 +1263,6 @@ void SteadyNSTurb::projectSUP(fileName folder, label NU, label NP, label NSUP,
 
     Eigen::MatrixXd inputs;
 
-    Info<< "The RBF kernel type is: " << rbfKernel << endl;
-
     if (rbfParams == "vel")
     {
         if (coeffL2_U.cols() != coeffL2.cols())
@@ -1377,29 +1301,6 @@ void SteadyNSTurb::projectSUP(fileName folder, label NU, label NP, label NSUP,
         FatalError << "Unknown rbfParams type: " << rbfParams << endl;
         FatalError.exit();
     }
-
-    if (rbfScaler)
-    {
-        // Compute row-wise min and max
-        Eigen::VectorXd rowMins = inputs.rowwise().minCoeff();
-        Eigen::VectorXd rowMaxs = inputs.rowwise().maxCoeff();
-        Eigen::VectorXd range   = rowMaxs - rowMins;
-
-        // Check for zero ranges
-        if ((range.array().abs() < 1e-12).any()) {
-            FatalErrorInFunction
-                << "Some rows have zero range, cannot scale."
-                << abort(FatalError);
-        }
-
-        // Store min/max
-        inputScaler.resize(inputs.rows(), 2);
-        inputScaler.col(0) = rowMins;
-        inputScaler.col(1) = rowMaxs;
-
-        // Vectorized scaling
-        inputs = (inputs.colwise() - rowMins).array().colwise() / range.array();
-    }        
     
     // Create RBF interpolators for nut coefficient interpolation
     rbfSplines.resize(nNutModes);
@@ -1410,7 +1311,7 @@ void SteadyNSTurb::projectSUP(fileName folder, label NU, label NP, label NSUP,
         
         // Prepare training data: X is parameter matrix (transposed), y is coefficient vector
         Eigen::MatrixXd X = mu.transpose();  // Now each row is a parameter sample
-        Eigen::VectorXd y = coeffL2.row(i).transpose();  // Coefficient vector for this mode
+        Eigen::VectorXd y = inputs.row(i).transpose();  // Coefficient vector for this mode
         
         rbfSplines[i]->fit(X, y);
         

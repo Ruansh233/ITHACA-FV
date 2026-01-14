@@ -798,7 +798,7 @@ void SteadyNSTurbNeu::projectSUP(fileName folder, label NU, label NP, label NSUP
         }
         else
         {
-            C_tensor = convective_term_tens_cache_mem(NUmodes, NPmodes, NSUPmodes);
+            C_tensor = convective_term_tens_cache(NUmodes, NPmodes, NSUPmodes);
         }
 
         word ct1Str = "ct1_" + name(liftfield.size()) + "_" + name(
@@ -949,7 +949,7 @@ void SteadyNSTurbNeu::projectSUP(fileName folder, label NU, label NP, label NSUP
         }
 
         B_matrix = diffusive_term(NUmodes, NPmodes, NSUPmodes);
-        C_tensor = convective_term_tens_cache_mem(NUmodes, NPmodes, NSUPmodes);
+        C_tensor = convective_term_tens_cache(NUmodes, NPmodes, NSUPmodes);
         K_matrix = pressure_gradient_term(NUmodes, NPmodes, NSUPmodes);
         P_matrix = divergence_term(NUmodes, NPmodes, NSUPmodes);
         M_matrix = mass_term(NUmodes, NPmodes, NSUPmodes);

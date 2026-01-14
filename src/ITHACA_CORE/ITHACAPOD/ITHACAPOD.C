@@ -155,8 +155,7 @@ void getModes(
 
         if (para->eigensolver == "spectra")
         {
-            Spectra::SymEigsSolver<double, Spectra::LARGEST_ALGE, Spectra::DenseSymMatProd<double >>
-            es(& op, nmodes, ncv);
+            Spectra::SymEigsSolver<Spectra::DenseSymMatProd<double>> es(op, nmodes, ncv);
             Info << "Using Spectra EigenSolver " << endl;
             es.init();
             es.compute(Spectra::SortRule::LargestAlge);
@@ -1424,8 +1423,8 @@ void getModes(
 
         if (para->eigensolver == "spectra")
         {
-            Spectra::SymEigsSolver<double, Spectra::LARGEST_ALGE, Spectra::DenseSymMatProd<double >>
-            es(& op, nmodes, ncv);
+            Spectra::SymEigsSolver< Spectra::DenseSymMatProd<double >>
+            es(op, nmodes, ncv);
             Info << "Using Spectra EigenSolver " << endl;
             es.init();
             es.compute(Spectra::SortRule::LargestAlge);
@@ -1755,8 +1754,8 @@ PtrList<GeometricField<Type, PatchField, GeoMesh >> DEIMmodes(
 
         if (para->eigensolver == "spectra")
         {
-            Spectra::SymEigsSolver<double, Spectra::LARGEST_ALGE, Spectra::DenseSymMatProd<double >>
-            es(& op, nmodes, ncv);
+            Spectra::SymEigsSolver< Spectra::DenseSymMatProd<double >>
+            es(op, nmodes, ncv);
             Info << "Using Spectra EigenSolver " << endl;
             es.init();
             es.compute(Spectra::SortRule::LargestAlge);
@@ -1938,8 +1937,8 @@ void getModes(
 
         if (para->eigensolver == "spectra")
         {
-            Spectra::SymEigsSolver<double, Spectra::LARGEST_ALGE, Spectra::DenseSymMatProd<double >>
-            es(& op, nmodes, ncv);
+            Spectra::SymEigsSolver<Spectra::DenseSymMatProd<double >>
+            es(op, nmodes, ncv);
             Info << "Using Spectra EigenSolver " << endl;
             es.init();
             es.compute(Spectra::SortRule::LargestAlge);

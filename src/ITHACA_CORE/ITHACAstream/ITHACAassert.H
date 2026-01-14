@@ -23,12 +23,14 @@ License
     along with ITHACA-FV. If not, see <http://www.gnu.org/licenses/>.
 \*---------------------------------------------------------------------------*/
 
+#ifndef ITHACAASSERT_H
+#define ITHACAASSERT_H
+
 #include <iostream>
 
 /// \file
 /// Implementation of the assert function for ITHACA-FV
 
-#pragma once
 
 inline void __M_Assert(const char* expr_str, bool expr, const char* file,
                        int line, const char* msg)
@@ -49,3 +51,4 @@ __M_Assert(#Expr, Expr, __FILE__, __LINE__, Msg)
 #define M_Assert(Expr, Msg) ;
 #endif
 
+#endif
