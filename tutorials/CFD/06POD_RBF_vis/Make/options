@@ -8,6 +8,7 @@ EXE_INC = \
     -I$(LIB_SRC)/dynamicMesh/lnInclude \
     -I$(LIB_SRC)/sampling/lnInclude \
     -I$(LIB_SRC)/fvOptions/lnInclude \
+    -I$(LIB_SRC)/sixDoFRigidBodyMotion/lnInclude \
     -I$(LIB_SRC)/fileFormats/lnInclude \
     -I$(LIB_SRC)/dynamicFvMesh/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \
@@ -17,13 +18,14 @@ EXE_INC = \
     -I$(LIB_ITHACA_SRC)/ITHACA_FOMPROBLEMS/lnInclude \
     -I$(LIB_ITHACA_SRC)/ITHACA_ROMPROBLEMS/lnInclude \
     -I$(LIB_ITHACA_SRC)/ITHACA_CORE/lnInclude \
+    -I$(LIB_ITHACA_SRC)/ITHACA_INTERPOLATOR/lnInclude \
     -I$(LIB_ITHACA_SRC)/thirdparty/Eigen \
     -I$(LIB_ITHACA_SRC)/thirdparty/spectra/include \
     -I$(LIB_ITHACA_SRC)/ITHACA_THIRD_PARTY/splinter/include \
     -DOFVER=$${WM_PROJECT_VERSION%.*} \
     -Wno-comment \
     -w \
-    -std=c++11 \
+    -std=c++17 \
 
 EXE_LIBS = \
     -lturbulenceModels \
@@ -32,10 +34,12 @@ EXE_LIBS = \
     -lfiniteVolume \
     -lmeshTools \
     -lfvOptions \
+    -lsixDoFRigidBodyMotion \
     -lsampling \
     -lforces \
     -lITHACA_FOMPROBLEMS \
     -lITHACA_ROMPROBLEMS \
     -lITHACA_THIRD_PARTY \
     -lITHACA_CORE \
+    -lITHACA_INTERPOLATOR \
     -L$(FOAM_USER_LIBBIN)

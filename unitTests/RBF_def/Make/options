@@ -16,10 +16,10 @@ EXE_INC = \
     -I$(LIB_SRC)/fileFormats/lnInclude \
     -I$(LIB_SRC)/dynamicMesh/lnInclude \
     -I$(LIB_ITHACA_SRC)/OF_EXT/lnInclude \
-    -I$(LIB_ITHACA_SRC)/ITHACA_FOMPROBLEMS/lnInclude \    
-    -I$(LIB_ITHACA_SRC)/ITHACA_ROMPROBLEMS/lnInclude \   
+    -I$(LIB_ITHACA_SRC)/ITHACA_FOMPROBLEMS/lnInclude \
+    -I$(LIB_ITHACA_SRC)/ITHACA_ROMPROBLEMS/lnInclude \
     -I$(LIB_ITHACA_SRC)/ITHACA_INTERPOLATOR/lnInclude \
-    -I$(LIB_ITHACA_SRC)/ITHACA_CORE/lnInclude \    
+    -I$(LIB_ITHACA_SRC)/ITHACA_CORE/lnInclude \
     -I$(LIB_ITHACA_SRC)/thirdparty/Eigen \
     -I$(LIB_ITHACA_SRC)/ITHACA_CORE/Foam2Eigen \
     -I$(LIB_ITHACA_SRC)/ITHACA_CORE/EigenFunctions \
