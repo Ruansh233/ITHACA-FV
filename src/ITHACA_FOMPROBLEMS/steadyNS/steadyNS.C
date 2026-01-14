@@ -624,7 +624,7 @@ void steadyNS::projectPPE(fileName folder, label NU, label NP, label NSUP)
         }
         else
         {
-            C_tensor = convective_term_tens_cache_mem(NUmodes, NPmodes, NSUPmodes);
+            C_tensor = convective_term_tens_cache(NUmodes, NPmodes, NSUPmodes);
         }
 
         word G_str = "G_" + name(liftfield.size()) + "_" + name(NUmodes) + "_" + name(
@@ -654,7 +654,7 @@ void steadyNS::projectPPE(fileName folder, label NU, label NP, label NSUP)
     else
     {
         B_matrix = diffusive_term(NUmodes, NPmodes, NSUPmodes);
-        C_tensor = convective_term_tens_cache_mem(NUmodes, NPmodes, NSUPmodes);
+        C_tensor = convective_term_tens_cache(NUmodes, NPmodes, NSUPmodes);
         M_matrix = mass_term(NUmodes, NPmodes, NSUPmodes);
         K_matrix = pressure_gradient_term(NUmodes, NPmodes, NSUPmodes);
         D_matrix = laplacian_pressure(NPmodes);
@@ -823,7 +823,7 @@ void steadyNS::projectSUP(fileName folder, label NU, label NP, label NSUP)
         }
         else
         {
-            C_tensor = convective_term_tens_cache_mem(NUmodes, NPmodes, NSUPmodes);
+            C_tensor = convective_term_tens_cache(NUmodes, NPmodes, NSUPmodes);
         }
 
         if (bcMethod == "penalty")
@@ -841,7 +841,7 @@ void steadyNS::projectSUP(fileName folder, label NU, label NP, label NSUP)
     else
     {
         B_matrix = diffusive_term(NUmodes, NPmodes, NSUPmodes);
-        C_tensor = convective_term_tens_cache_mem(NUmodes, NPmodes, NSUPmodes);
+        C_tensor = convective_term_tens_cache(NUmodes, NPmodes, NSUPmodes);
         K_matrix = pressure_gradient_term(NUmodes, NPmodes, NSUPmodes);
         P_matrix = divergence_term(NUmodes, NPmodes, NSUPmodes);
         M_matrix = mass_term(NUmodes, NPmodes, NSUPmodes);
@@ -999,7 +999,7 @@ void steadyNS::discretizeThenProject(fileName folder, label NU, label NP,
         }
         else
         {
-            C_tensor = convective_term_tens_cache_mem(NUmodes, NPmodes, NSUPmodes);
+            C_tensor = convective_term_tens_cache(NUmodes, NPmodes, NSUPmodes);
         }
 
         word Cf_str = "Cf_" + name(liftfield.size()) + "_" + name(NUmodes) + "_" + name(
@@ -1046,7 +1046,7 @@ void steadyNS::discretizeThenProject(fileName folder, label NU, label NP,
     else
     {
         B_matrix = diffusive_term(NUmodes, NPmodes, NSUPmodes);
-        C_tensor = convective_term_tens_cache_mem(NUmodes, NPmodes, NSUPmodes);
+        C_tensor = convective_term_tens_cache(NUmodes, NPmodes, NSUPmodes);
         K_matrix = pressure_gradient_term(NUmodes, NPmodes, NSUPmodes);
         P_matrix = divergence_term(NUmodes, NPmodes, NSUPmodes);
         BP_matrix = diffusive_term_flux_method(NUmodes, NPmodes, NSUPmodes);

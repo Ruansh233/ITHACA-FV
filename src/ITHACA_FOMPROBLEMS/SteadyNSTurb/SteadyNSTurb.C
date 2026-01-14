@@ -508,50 +508,6 @@ Eigen::MatrixXd SteadyNSTurb::btTurbulence(label NUmodes, label NSUPmodes)
     return btMatrix;
 }
 
-void SteadyNSTurb::getRBFType(const word& viscCoeff, const word& rbfKernel)
-{
-    if (viscCoeff == "RBF")
-    {
-        if (rbfKernel == "linear")
-        {
-            rbfType = SPLINTER::RadialBasisFunctionType::LINEAR;
-        }
-        else if (rbfKernel == "thinPlate")
-        {
-            rbfType = SPLINTER::RadialBasisFunctionType::THIN_PLATE_SPLINE;
-        }
-        else if (rbfKernel == "multiQuadric")
-        {
-            rbfType = SPLINTER::RadialBasisFunctionType::MULTIQUADRIC;
-        }
-        else if (rbfKernel == "inverseQuadric")
-        {
-            rbfType = SPLINTER::RadialBasisFunctionType::INVERSE_MULTIQUADRIC;
-        }
-        else if (rbfKernel == "inverseMultiQuadric")
-        {
-            rbfType = SPLINTER::RadialBasisFunctionType::INVERSE_MULTIQUADRIC;
-        }
-        else if (rbfKernel == "gaussian")
-        {
-            rbfType = SPLINTER::RadialBasisFunctionType::GAUSSIAN;
-        }
-        else
-        {
-            Info<< "Available RBF kernels are: linear, thinPlate, multiQuadric, "
-                << "inverseQuadric, inverseMultiQuadric, gaussian." << endl;
-            Info<< "Current rbfKernel is: " << rbfKernel << endl;
-            FatalError << "Unknown RBF kernel type: " << rbfKernel << endl;
-            FatalError.exit();
-        }
-    }
-    else
-    {
-        FatalError << "Unknown viscCoeff type: " << viscCoeff << endl;
-        FatalError.exit();
-    }
-}
-
 List <Eigen::MatrixXd> SteadyNSTurb::bcPenaltyLiftMat(label NUmodes,
         label NLiftmodes)
 {
@@ -713,7 +669,7 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
         }
         else
         {
-            C_tensor = convective_term_tens_cache_mem(NUmodes, NPmodes, NSUPmodes);
+            C_tensor = convective_term_tens_cache(NUmodes, NPmodes, NSUPmodes);
         }
 
         word ct1Str = "ct1_" + name(liftfield.size()) + "_" + name(
@@ -726,7 +682,7 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
         }
         else
         {
-            ct1Tensor = turbulenceTensor1_cache_mem(NUmodes, NSUPmodes, nNutModes);
+            ct1Tensor = turbulenceTensor1_cache(NUmodes, NSUPmodes, nNutModes);
         }
 
         word ct2Str = "ct2_" + name(liftfield.size()) + "_" + name(
@@ -739,7 +695,7 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
         }
         else
         {
-            ct2Tensor = turbulenceTensor2_cache_mem(NUmodes, NSUPmodes, nNutModes);
+            ct2Tensor = turbulenceTensor2_cache(NUmodes, NSUPmodes, nNutModes);
         }
 
         word G_str = "G_" + name(liftfield.size()) + "_" + name(NUmodes) + "_" + name(
@@ -763,7 +719,7 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
         }
         else
         {
-            ct1PPETensor = turbulencePPETensor1_cache_mem(NUmodes, NSUPmodes, NPmodes, nNutModes);
+            ct1PPETensor = turbulencePPETensor1_cache(NUmodes, NSUPmodes, NPmodes, nNutModes);
         }
 
         word cth2PPE_str = "ct2PPE_" + name(liftfield.size()) + "_" + name(
@@ -775,7 +731,7 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
         }
         else
         {
-            ct2PPETensor = turbulencePPETensor2_cache_mem(NUmodes, NSUPmodes, NPmodes, nNutModes);
+            ct2PPETensor = turbulencePPETensor2_cache(NUmodes, NSUPmodes, NPmodes, nNutModes);
         }
 
         if (bcMethod == "penalty")
@@ -819,7 +775,7 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
         }
 
         B_matrix = diffusive_term(NUmodes, NPmodes, NSUPmodes);
-        C_tensor = convective_term_tens_cache_mem(NUmodes, NPmodes, NSUPmodes);
+        C_tensor = convective_term_tens_cache(NUmodes, NPmodes, NSUPmodes);
         K_matrix = pressure_gradient_term(NUmodes, NPmodes, NSUPmodes);
         M_matrix = mass_term(NUmodes, NPmodes, NSUPmodes);
         D_matrix = laplacian_pressure(NPmodes);
@@ -827,10 +783,10 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
         btMatrix = btTurbulence(NUmodes, NSUPmodes);
         BC3_matrix = pressure_BC3(NUmodes, NPmodes);
         // BC4_matrix = pressure_BC4(NUmodes, NPmodes);
-        ct1Tensor = turbulenceTensor1_cache_mem(NUmodes, NSUPmodes, nNutModes);
-        ct2Tensor = turbulenceTensor2_cache_mem(NUmodes, NSUPmodes, nNutModes);
-        ct1PPETensor = turbulencePPETensor1_cache_mem(NUmodes, NSUPmodes, NPmodes, nNutModes);
-        ct2PPETensor = turbulencePPETensor2_cache_mem(NUmodes, NSUPmodes, NPmodes, nNutModes);
+        ct1Tensor = turbulenceTensor1_cache(NUmodes, NSUPmodes, nNutModes);
+        ct2Tensor = turbulenceTensor2_cache(NUmodes, NSUPmodes, nNutModes);
+        ct1PPETensor = turbulencePPETensor1_cache(NUmodes, NSUPmodes, NPmodes, nNutModes);
+        ct2PPETensor = turbulencePPETensor2_cache(NUmodes, NSUPmodes, NPmodes, nNutModes);
 
         if (bcMethod == "penalty")
         {
@@ -950,9 +906,6 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
 
     // Create RBF interpolators for nut coefficient interpolation
     rbfSplines.resize(nNutModes);
-    samples.resize(nNutModes);
-    rbfSplines.resize(nNutModes);
-    Eigen::MatrixXd weights;
 
     for (label i = 0; i < nNutModes; i++)
     {
@@ -1076,7 +1029,7 @@ void SteadyNSTurb::projectSUP(fileName folder, label NU, label NP, label NSUP,
         }
         else
         {
-            C_tensor = convective_term_tens_cache_mem(NUmodes, NPmodes, NSUPmodes);
+            C_tensor = convective_term_tens_cache(NUmodes, NPmodes, NSUPmodes);
         }
 
         word ct1Str = "ct1_" + name(liftfield.size()) + "_" + name(
@@ -1089,7 +1042,7 @@ void SteadyNSTurb::projectSUP(fileName folder, label NU, label NP, label NSUP,
         }
         else
         {
-            ct1Tensor = turbulenceTensor1_cache_mem(NUmodes, NSUPmodes, nNutModes);
+            ct1Tensor = turbulenceTensor1_cache(NUmodes, NSUPmodes, nNutModes);
         }
 
         word ct2Str = "ct2_" + name(liftfield.size()) + "_" + name(
@@ -1102,7 +1055,7 @@ void SteadyNSTurb::projectSUP(fileName folder, label NU, label NP, label NSUP,
         }
         else
         {
-            ct2Tensor = turbulenceTensor2_cache_mem(NUmodes, NSUPmodes, nNutModes);
+            ct2Tensor = turbulenceTensor2_cache(NUmodes, NSUPmodes, nNutModes);
         }
 
         if (bcMethod == "penalty")
@@ -1146,13 +1099,13 @@ void SteadyNSTurb::projectSUP(fileName folder, label NU, label NP, label NSUP,
         }
 
         B_matrix = diffusive_term(NUmodes, NPmodes, NSUPmodes);
-        C_tensor = convective_term_tens_cache_mem(NUmodes, NPmodes, NSUPmodes);
+        C_tensor = convective_term_tens_cache(NUmodes, NPmodes, NSUPmodes);
         K_matrix = pressure_gradient_term(NUmodes, NPmodes, NSUPmodes);
         P_matrix = divergence_term(NUmodes, NPmodes, NSUPmodes);
         M_matrix = mass_term(NUmodes, NPmodes, NSUPmodes);
         btMatrix = btTurbulence(NUmodes, NSUPmodes);
-        ct1Tensor = turbulenceTensor1_cache_mem(NUmodes, NSUPmodes, nNutModes);
-        ct2Tensor = turbulenceTensor2_cache_mem(NUmodes, NSUPmodes, nNutModes);
+        ct1Tensor = turbulenceTensor1_cache(NUmodes, NSUPmodes, nNutModes);
+        ct2Tensor = turbulenceTensor2_cache(NUmodes, NSUPmodes, nNutModes);
 
         if (bcMethod == "penalty")
         {
