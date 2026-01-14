@@ -9,6 +9,7 @@ EXE_INC = \
     -I$(LIB_ITHACA_SRC)/ITHACA_FOMPROBLEMS/lnInclude \
     -I$(LIB_ITHACA_SRC)/ITHACA_ROMPROBLEMS/lnInclude \
     -I$(LIB_ITHACA_SRC)/ITHACA_CORE/lnInclude \
+    -I$(LIB_ITHACA_SRC)/ITHACA_INTERPOLATOR/lnInclude \
     -I$(LIB_ITHACA_SRC)/thirdparty/Eigen \
     -I$(LIB_ITHACA_SRC)/thirdparty/Eigen/src \
     -I$(LIB_ITHACA_SRC)/thirdparty/spectra/include \
@@ -16,7 +17,7 @@ EXE_INC = \
     -I$(MUQ_EXT_LIBRARIES)/include\
     -DOFVER=$${WM_PROJECT_VERSION%.*} \
     -Wno-comment \
-    -std=c++11 \
+    -std=c++17 \
     -Wno-maybe-uninitialized \
     -Wno-sign-compare \
     -Wno-unknown-pragmas \
@@ -35,12 +36,16 @@ EXE_LIBS = \
     -lmeshTools \
     -lfvOptions \
     -lsampling \
+    -ldynamicMesh \
+    -ldynamicFvMesh \
+    -lsixDoFRigidBodyMotion\
     -lfluidThermophysicalModels \
     -lradiationModels \
     -lspecie \
     -lforces \
     -lfileFormats \
     -lITHACA_THIRD_PARTY \
+    -lITHACA_INTERPOLATOR \
     -lITHACA_CORE \
     -L$(FOAM_USER_LIBBIN) \
     -L$(MUQ_LIBRARIES)/lib \

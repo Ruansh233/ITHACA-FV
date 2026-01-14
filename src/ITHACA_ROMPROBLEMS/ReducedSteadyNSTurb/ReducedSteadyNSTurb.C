@@ -269,46 +269,12 @@ void ReducedSteadyNSTurb::solveOnlineSUP(Eigen::MatrixXd vel)
         newtonObjectSUP.bc(j) = vel_now(j, 0);
     }
 
-    if (problem->viscCoeff == "L2")
+    // Convert vel_now to vector for RBF interpolation
+    Eigen::VectorXd vel_vec = vel_now.col(0);
+    for (int i = 0; i < nphiNut; i++)
     {
-        for (int i = 0; i < nphiNut; i++)
-        {
-            newtonObjectSUP.gNut = problem->nutCoeff;
-        }
-    }
-    else if (problem->viscCoeff == "RBF")
-    {
-        // for (int i = 0; i < nphiNut; i++)
-        // {
-        //     newtonObjectPPE.gNut(i) = problem->rbfSplines[i]->eval(vel_now);
-        //     rbfCoeff = newtonObjectPPE.gNut;
-        // }
-
-        if (problem->rbfParams == "params")
-        {            
-            label caseIdx = count_online_solve-1;
-            std::cout << "The rbfparameter is: " << onlineMu.row(caseIdx) << std::endl;
-            for (int i = 0; i < nphiNut; i++)
-            {                
-                newtonObjectSUP.gNut(i) = problem->rbfSplines[i]->eval(onlineMu.row(caseIdx));
-                rbfCoeff = newtonObjectSUP.gNut;
-            }
-        }
-        else
-        {
-            std::cout << "The rbfparameter is: " << vel_now << std::endl;
-            for (int i = 0; i < nphiNut; i++)
-            {
-                newtonObjectSUP.gNut(i) = problem->rbfSplines[i]->eval(vel_now);
-                rbfCoeff = newtonObjectSUP.gNut;
-            }
-        }
-    }
-    else
-    {
-        Info << "The way to compute the eddy viscosity coefficients has to be either L2 or RBF"
-             << endl;
-        exit(0);
+        newtonObjectSUP.gNut(i) = problem->rbfSplines[i]->predict(vel_vec);
+        rbfCoeff = newtonObjectSUP.gNut;
     }
 
     newtonObjectSUP.nu = nu;
@@ -375,46 +341,12 @@ void ReducedSteadyNSTurb::solveOnlinePPE(Eigen::MatrixXd vel)
         newtonObjectPPE.bc(j) = vel_now(j, 0);
     }
 
-    if (problem->viscCoeff == "L2")
+    // Convert vel_now to vector for RBF interpolation
+    Eigen::VectorXd vel_vec = vel_now.col(0);
+    for (int i = 0; i < nphiNut; i++)
     {
-        for (int i = 0; i < nphiNut; i++)
-        {
-            newtonObjectPPE.gNut = problem->nutCoeff;
-        }
-    }
-    else if (problem->viscCoeff == "RBF")
-    {
-        // for (int i = 0; i < nphiNut; i++)
-        // {
-        //     newtonObjectPPE.gNut(i) = problem->rbfSplines[i]->eval(vel_now);
-        //     rbfCoeff = newtonObjectPPE.gNut;
-        // }
-
-        if (problem->rbfParams == "params")
-        {            
-            label caseIdx = count_online_solve-1;
-            std::cout << "The rbfparameter is: " << onlineMu.row(caseIdx) << std::endl;
-            for (int i = 0; i < nphiNut; i++)
-            {
-                newtonObjectSUP.gNut(i) = problem->rbfSplines[i]->eval(onlineMu.row(caseIdx));
-                rbfCoeff = newtonObjectSUP.gNut;
-            }
-        }
-        else
-        {
-            std::cout << "The rbfparameter is: " << vel_now << std::endl;
-            for (int i = 0; i < nphiNut; i++)
-            {
-                newtonObjectSUP.gNut(i) = problem->rbfSplines[i]->eval(vel_now);
-                rbfCoeff = newtonObjectSUP.gNut;
-            }
-        }
-    }
-    else
-    {
-        Info << "The way to compute the eddy viscosity coefficients has to be either L2 or RBF"
-             << endl;
-        exit(0);
+        newtonObjectPPE.gNut(i) = problem->rbfSplines[i]->predict(vel_vec);
+        rbfCoeff = newtonObjectPPE.gNut;
     }
 
     newtonObjectPPE.nu = nu;

@@ -25,7 +25,9 @@ enum class RadialBasisFunctionType
     INVERSE_MULTIQUADRIC,
     THIN_PLATE_SPLINE,
     GAUSSIAN,
-    LINEAR
+    LINEAR,
+    CUBIC,
+    QUINTIC
 };
 
 /*
@@ -36,6 +38,7 @@ class RadialBasisFunction
 public:
     RadialBasisFunction() : e(1.0) {}
     RadialBasisFunction(double e) : e(e) {}
+    virtual ~RadialBasisFunction() = default; // virtual because class is polymorphic
     virtual double eval(double r) const = 0;
     virtual double evalDerivative(double r) const = 0;
     double e;
@@ -117,7 +120,33 @@ public:
     }
     double evalDerivative(double r) const
     {
-        return 1;
+        return 1.0;
+    }
+};
+
+class Cubic : public RadialBasisFunction
+{
+public:
+    double eval(double r) const
+    {
+        return r*r*r;
+    }
+    double evalDerivative(double r) const
+    {
+        return 3*r*r;
+    }
+};
+
+class Quintic : public RadialBasisFunction
+{
+public:
+    double eval(double r) const
+    {
+        return r*r*r*r*r;
+    }
+    double evalDerivative(double r) const
+    {
+        return 5*r*r*r*r;
     }
 };
 
@@ -140,8 +169,8 @@ public:
     double eval(DenseVector x) const;
     double eval(std::vector<double> x) const;
 
-    DenseMatrix evalJacobian(DenseVector x) const {}; // TODO: implement via RBF_fn
-    DenseMatrix evalHessian(DenseVector x) const {}; // TODO: implement via RBF_fn
+    DenseMatrix evalJacobian(DenseVector x) const { return DenseMatrix(); } // TODO: implement via RBF_fn
+    DenseMatrix evalHessian(DenseVector x) const { return DenseMatrix(); } // TODO: implement via RBF_fn
     //    std::vector<double> getDomainUpperBound() const;
     //    std::vector<double> getDomainLowerBound() const;
     DenseMatrix weights;

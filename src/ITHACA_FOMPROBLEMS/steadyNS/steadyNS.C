@@ -1232,70 +1232,6 @@ Eigen::Tensor<double, 3> steadyNS::convective_term_tens_cache(label NUmodes,
         label NSUPmodes)
 {
     label Csize = NUmodes + NSUPmodes + liftfield.size();
-    Eigen::Tensor<double, 3> C_tensor;
-    C_tensor.resize(Csize, Csize, Csize);
-
-    PtrList<autoPtr<volVectorField>> divCache(Csize*Csize);
-    for (label j = 0; j < Csize; ++j)
-    {
-        if (fluxMethod == "consistent")
-        {
-            for (label k = 0; k < Csize; ++k)
-            {
-                autoPtr<volVectorField> divFieldPtr
-                (
-                    new volVectorField
-                    (
-                        fvc::div(L_PHImodes[j], L_U_SUPmodes[k])
-                    )
-                );
-                divCache.set(j*Csize + k, new autoPtr<volVectorField>(divFieldPtr));
-            }
-        }
-        else
-        {
-            surfaceScalarField SfUj = linearInterpolate(L_U_SUPmodes[j]) & L_U_SUPmodes[j].mesh().Sf();
-            for (label k = 0; k < Csize; ++k)
-            {
-                autoPtr<volVectorField> divFieldPtr
-                (
-                    new volVectorField
-                    (
-                        fvc::div(SfUj, L_U_SUPmodes[k])
-                    )
-                );
-                divCache.set(j*Csize + k, new autoPtr<volVectorField>(divFieldPtr));
-            }
-        }
-    }
-
-    for (label i = 0; i < Csize; i++)
-    {
-        for (label j = 0; j < Csize; j++)
-        {
-            for (label k = 0; k < Csize; k++)
-            {
-                C_tensor(i, j, k) = fvc::domainIntegrate(L_U_SUPmodes[i] & divCache[j*Csize+k]()).value();
-            }
-        }
-    }        
-
-    if (Pstream::master())
-    {
-        // Export the tensor
-        ITHACAstream::SaveDenseTensor(C_tensor, "./ITHACAoutput/Matrices/",
-                                      "C_" + name(liftfield.size()) + "_" + name(NUmodes) + "_" + name(
-                                          NSUPmodes) + "_t");
-    }
-
-    return C_tensor;
-}
-
-Eigen::Tensor<double, 3> steadyNS::convective_term_tens_cache_mem(label NUmodes,
-        label NPmodes,
-        label NSUPmodes)
-{
-    label Csize = NUmodes + NSUPmodes + liftfield.size();
     Eigen::Tensor<double, 3> C_tensor(Csize, Csize, Csize);
 
     for (label j = 0; j < Csize; ++j)
@@ -1462,52 +1398,6 @@ Eigen::Tensor<double, 3> steadyNS::divMomentum_cache(label NUmodes, label NPmode
 {
     label g1Size = NPmodes + liftfieldP.size();
     label g2Size = NUmodes + NSUPmodes + liftfield.size();
-    Eigen::Tensor<double, 3> gTensor;
-    gTensor.resize(g1Size, g2Size, g2Size);
-
-    PtrList<autoPtr<volVectorField>> divCache(g2Size*g2Size);
-    for (label j = 0; j < g2Size; ++j)
-    {
-        surfaceScalarField SfUj = fvc::interpolate(L_U_SUPmodes[j]) & L_U_SUPmodes[j].mesh().Sf();
-        for (label k = 0; k < g2Size; ++k)
-        {
-            autoPtr<volVectorField> divFieldPtr
-            (
-                new volVectorField
-                (
-                    fvc::div(SfUj, L_U_SUPmodes[k])
-                )
-            );
-            divCache.set(j*g2Size + k, new autoPtr<volVectorField>(divFieldPtr));
-        }
-    }
-
-    for (label i = 0; i < g1Size; i++)
-    {
-        for (label j = 0; j < g2Size; j++)
-        {
-            for (label k = 0; k < g2Size; k++)
-            {
-                gTensor(i, j, k) = fvc::domainIntegrate(fvc::grad(Pmodes[i]) & divCache[j*g2Size+k]()).value();
-            }
-        }
-    }
-
-    if (Pstream::master())
-    {
-        // Export the tensor
-        ITHACAstream::SaveDenseTensor(gTensor, "./ITHACAoutput/Matrices/",
-                                      "G_" + name(liftfield.size()) + "_" + name(NUmodes) + "_" + name(
-                                          NSUPmodes) + "_" + name(NPmodes) + "_t");
-    }
-
-    return gTensor;
-}
-
-Eigen::Tensor<double, 3> steadyNS::divMomentum_cache_mem(label NUmodes, label NPmodes)
-{
-    label g1Size = NPmodes + liftfieldP.size();
-    label g2Size = NUmodes + NSUPmodes + liftfield.size();
     Eigen::Tensor<double, 3> gTensor (g1Size, g2Size, g2Size);
 
     List<tmp<volVectorField>> PmodesGrad(g1Size);
@@ -1625,7 +1515,10 @@ Eigen::MatrixXd steadyNS::pressure_BC1(label NUmodes, label NPmodes)
 
             for (label k = 0; k < lpl.boundaryField().size(); k++)
             {
-                s += gSum(lpl.boundaryField()[k]);
+                if (lpl.boundaryField()[k].type() != "processor")
+                {
+                    s += gSum(lpl.boundaryField()[k]);
+                }
             }
 
             BC1_matrix(i, j) = s;
@@ -1668,7 +1561,10 @@ List <Eigen::MatrixXd> steadyNS::pressure_BC2(label NUmodes, label NPmodes)
 
                 for (label k = 0; k < div_m.boundaryField().size(); k++)
                 {
-                    s += gSum(div_m.boundaryField()[k]);
+                    if (div_m.boundaryField()[k].type() != "processor")
+                    {
+                        s += gSum(div_m.boundaryField()[k]);
+                    }
                 }
 
                 BC2_matrix[i](j, k) = s;
@@ -1700,7 +1596,10 @@ Eigen::Tensor<double, 3> steadyNS::pressureBC2(label NUmodes, label NPmodes)
 
                 for (label k = 0; k < div_m.boundaryField().size(); k++)
                 {
-                    s += gSum(div_m.boundaryField()[k]);
+                    if (div_m.boundaryField()[k].type() != "processor")
+                    {
+                        s += gSum(div_m.boundaryField()[k]);
+                    }
                 }
 
                 bc2Tensor(i, j, k) = s;
@@ -1736,7 +1635,10 @@ Eigen::MatrixXd steadyNS::pressure_BC3(label NUmodes, label NPmodes)
             double s = 0;
             for (label k = 0; k < BC5.boundaryField().size(); k++)
             {
-                s += gSum(BC5.boundaryField()[k]);
+                if (BC5.boundaryField()[k].type() != "processor")
+                {
+                    s += gSum(BC5.boundaryField()[k]);
+                }
             }
 
             BC3_matrix(i, j) = s;
@@ -1770,7 +1672,10 @@ Eigen::MatrixXd steadyNS::pressure_BC4(label NUmodes, label NPmodes)
 
             for (label k = 0; k < BC5.boundaryField().size(); k++)
             {
-                s += gSum(BC5.boundaryField()[k]);
+                if (BC5.boundaryField()[k].type() != "processor")
+                {
+                    s += gSum(BC5.boundaryField()[k]);
+                }
             }
 
             BC4_matrix(i, j) = s;

@@ -5,12 +5,12 @@
 [submodule "src/thirdparty/Eigen"]
 	path = src/thirdparty/Eigen
 	url = https://gitlab.com/libeigen/eigen.git
-[submodule "src/thirdparty/mathtoolbox"]
-	path = src/thirdparty/mathtoolbox
-	url = https://github.com/yuki-koyama/mathtoolbox
+[submodule "src/thirdparty/spectra"]
+	path = src/thirdparty/spectra
+	url = https://github.com/yixuan/spectra.git
 [submodule "src/thirdparty/OptimLib"]
 	path = src/thirdparty/OptimLib
 	url = https://github.com/kthohr/optim.git
-[submodule "src/thirdparty/spectra"]
-	path = src/thirdparty/spectra
-	url = https://github.com/yixuan/spectra
+[submodule "src/thirdparty/mathtoolbox"]
+	path = src/thirdparty/mathtoolbox
+	url = https://github.com/yuki-koyama/mathtoolbox.git
