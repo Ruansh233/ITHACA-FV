@@ -150,6 +150,32 @@ public:
     }
 };
 
+class Cubic : public RadialBasisFunction
+{
+public:
+    double eval(double r) const
+    {
+        return r*r*r;
+    }
+    double evalDerivative(double r) const
+    {
+        return 3*r*r;
+    }
+};
+
+class Quintic : public RadialBasisFunction
+{
+public:
+    double eval(double r) const
+    {
+        return r*r*r*r*r;
+    }
+    double evalDerivative(double r) const
+    {
+        return 5*r*r*r*r;
+    }
+};
+
 /*
  * Class for radial basis function splines.
  * The RBF splines support scattered sampling, but their construction require

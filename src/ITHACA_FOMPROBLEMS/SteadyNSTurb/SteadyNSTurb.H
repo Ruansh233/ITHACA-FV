@@ -113,8 +113,23 @@ class SteadyNSTurb: public steadyNS
         /// The matrix of L2 projection coefficients for the eddy viscosity
         Eigen::MatrixXd coeffL2;
 
+        /// The matrix of L2 projection coefficients for velocity modes
+        Eigen::MatrixXd coeffL2_U;
+
+        /// The matrix of L2 projection coefficients for pressure modes
+        Eigen::MatrixXd coeffL2_P;
+
+        /// The matrix of L2 projection coefficients for lifting functions
+        Eigen::MatrixXd coeffL2_lift;
+
+        /// The matrix of L2 projection coefficients for velocity modes and lifting functions
+        Eigen::MatrixXd coeffL2_lift_U;
+
         /// The vector of L2 projection coefficients for the eddy viscosity snapshot
         Eigen::VectorXd nutCoeff;
+
+        /// The parameter scaler matrix
+        Eigen::MatrixXd inputScaler;
 
         /// The way to compute the eddy viscosity snapshots
         dictionary viscRBFdict;
@@ -144,7 +159,11 @@ class SteadyNSTurb: public steadyNS
         /// @brief      Select the rbfkernel for the eddy viscosity
         /// @param[in]  rbfKernel  The name of the RBF kernel to be used for the eddy viscosity
         ///
-        void getRBFType(const word& viscCoeff, const word& rbfKernel);
+        /// @return     The type of the RBF kernel
+        /// @details    The RBF kernel can be one of the following: linear, thinPlate, multiQuadric,
+        /// inverseQuadric, inverseMultiQuadric, gaussian.
+        /// 
+        SPLINTER::RadialBasisFunctionType getRBFType(const word& viscCoeff, const word& rbfKernel);
 
         //--------------------------------------------------------------------------
         /// Project using a PPE approach

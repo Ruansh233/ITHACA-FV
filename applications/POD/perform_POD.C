@@ -56,17 +56,43 @@ SourceFiles
 #include <stdio.h>
 #include "ITHACAPOD.H"
 #include "ITHACAparameters.H"
+#include "ITHACAutilities.H"
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+template<typename T>
+void computeLift(PtrList<T>& Lfield,
+                PtrList<T>& liftfield,
+                PtrList<T>& omfield)
+{
+    for (label k = 0; k < liftfield.size(); k++)
+    {
+        for (label j = 0; j < Lfield.size(); j++)
+        {
+            if (k == 0)
+            {
+                autoPtr<T> p(new T("U", Lfield[j] - liftfield[k]));
+                omfield.append(p);
+            }
+            else
+            {
+                autoPtr<T> p(new T("U", omfield[j] - liftfield[k]));
+                omfield.set(j, p);
+            }
+        }
+    }
+}
 
 int main(int argc, char *argv[])
 {
 
-#include "setRootCase.H"
-#include "createTime.H"
-#include "createMesh.H"
+    #include "setRootCase.H"
+    #include "createTime.H"
+    #include "createMesh.H"
 
     PtrList<volVectorField> Vfield;
     PtrList<volScalarField> Sfield;
+    PtrList<volVectorField> Vomfield;
+    PtrList<volScalarField> Somfield;
     PtrList<volVectorField> Vmodes;
     PtrList<volScalarField> Smodes;
 
@@ -98,11 +124,11 @@ int main(int argc, char *argv[])
     label endTime;
 
     //Read FORCESdict
-    IOdictionary ITHACAPODdict
+    IOdictionary ITHACAdict
     (
         IOobject
         (
-            "ITHACAPODdict",
+            "ITHACAdict",
             runTime.system(),
             mesh,
             IOobject::MUST_READ,
@@ -114,8 +140,11 @@ int main(int argc, char *argv[])
     instantList Times = runTime.times();
 
     // Read Initial and last time from the POD dictionary
-    const entry* existnsnap = ITHACAPODdict.lookupEntryPtr("Nsnapshots", false, true);
-    const entry* existLT = ITHACAPODdict.lookupEntryPtr("FinalTime", false, true);
+    const entry* existnsnap = ITHACAdict.lookupEntryPtr("Nsnapshots", false, true);
+    const entry* existLT = ITHACAdict.lookupEntryPtr("FinalTime", false, true);
+
+    // Read lifted option
+    bool lifted = ITHACAdict.getOrDefault<bool>("lifted", false);
 
     // Initiate variable from PODSolverDict
     if ((existnsnap) && (existLT))
@@ -125,8 +154,8 @@ int main(int argc, char *argv[])
     }
     else if (existnsnap)
     {
-        scalar InitialTime = ITHACAPODdict.lookupOrDefault<scalar>("InitialTime", 0);
-        nSnapshots = readScalar(ITHACAPODdict.lookup("Nsnapshots"));
+        scalar InitialTime = ITHACAdict.getOrDefault<scalar>("InitialTime", 0);
+        nSnapshots = ITHACAdict.getScalar("Nsnapshots");
         startTime = Time::findClosestTimeIndex(runTime.times(), InitialTime);
         nSnapshots = min(nSnapshots , Times.size() - startTime);
         endTime = startTime + nSnapshots - 1;
@@ -134,8 +163,8 @@ int main(int argc, char *argv[])
     }
     else
     {
-        scalar InitialTime = ITHACAPODdict.lookupOrDefault<scalar>("InitialTime", 0);
-        scalar FinalTime = ITHACAPODdict.lookupOrDefault<scalar>("FinalTime", 100000000000000);
+        scalar InitialTime = ITHACAdict.getOrDefault<scalar>("InitialTime", 0);
+        scalar FinalTime = ITHACAdict.getOrDefault<scalar>("FinalTime", 100000000000000);
         endTime = Time::findClosestTimeIndex(runTime.times(), FinalTime);
         startTime = Time::findClosestTimeIndex(runTime.times(), InitialTime);
         nSnapshots = endTime - startTime + 1;
@@ -146,18 +175,17 @@ int main(int argc, char *argv[])
         }
     }
     // Print out some Infos
-    Info << "startTime: " << startTime << "\n" << "endTime: " << endTime << "\n" << "nSnapshots: " << nSnapshots << "\n" << endl;
+    Info<< "startTime: " << Times[startTime].name() << "\n" 
+        << "endTime: " << Times[endTime].name() << "\n" 
+        << "nSnapshots: " << nSnapshots << "\n" << endl;
 
     // Set the initial time
     runTime.setTime(Times[startTime], startTime);
 
     wordList fieldlist
     (
-        ITHACAPODdict.lookup("fields")
+        ITHACAdict.lookup("fields")
     );
-
-    //word Name = ITHACAPODdict.lookup("fieldName");
-    //word type = ITHACAPODdict.lookup("type");
 
     if (startTime == endTime)
     {
@@ -167,21 +195,21 @@ int main(int argc, char *argv[])
 
     for (label k = 0; k < fieldlist.size(); k++)
     {
-        dictionary& subDict = ITHACAPODdict.subDict(fieldlist[k]);
-        scalar nmodes = readScalar(subDict.lookup("nmodes"));
+        dictionary& subDict = ITHACAdict.subDict(fieldlist[k]);
+        scalar nmodes = subDict.get<scalar>("nmodes");
+        scalar ncoeffs = subDict.getOrDefault<scalar>("ncoeffs", nmodes);
         word field_name(subDict.lookup("field_name"));
         word field_type(subDict.lookup("field_type"));
 
         for (label i = startTime; i < endTime + 1; i++)
         {
-            Info << "Reading snapshot " << i << " for field " << field_name << endl;
+            Info << "Reading snapshot " << Times[i].name() << " for field " << field_name << endl;
             runTime.setTime(Times[i], i);
             mesh.readUpdate();
 
             if (field_type == "vector")
             {
-
-                volVectorField vector_field
+                autoPtr<volVectorField> p(new volVectorField
                 (
                     IOobject
                     (
@@ -191,13 +219,13 @@ int main(int argc, char *argv[])
                         IOobject::MUST_READ
                     ),
                     mesh
-                );
-                Vfield.append(vector_field.clone());
+                ));
+                Vfield.append(p);
             }
 
             if (field_type == "scalar")
             {
-                volScalarField scalar_field
+                autoPtr<volScalarField> p(new volScalarField
                 (
                     IOobject
                     (
@@ -207,23 +235,65 @@ int main(int argc, char *argv[])
                         IOobject::MUST_READ
                     ),
                     mesh
-                );
-                Sfield.append(scalar_field.clone());
+                ));
+                Sfield.append(p);
             }
         }
 
         if (field_type == "vector")
         {
-            ITHACAPOD::getModes(Vfield, Vmodes, field_name, 0, 0, 0, nmodes, para->correctBC);
-        }
-        if (field_type == "scalar")
-        {
-            ITHACAPOD::getModes(Sfield, Smodes, field_name, 0, 0, 0, nmodes, para->correctBC);
-        }
+            if (lifted)
+            {
+                PtrList<volVectorField> liftFields;
+                ITHACAstream::read_fields(liftFields, field_name, "./lift/");                
+                computeLift<volVectorField>(Vfield, liftFields, Vomfield);
 
-        Vfield.clear();
-        Sfield.clear();
+                ITHACAPOD::getModes(Vomfield, Vmodes, field_name, 0, 0, 0, nmodes, para->correctBC);
+                Eigen::MatrixXd coeffs = ITHACAutilities::getCoeffs(Vomfield,
+                                            Vmodes, ncoeffs);
+                
+                ITHACAstream::exportFields(Vomfield, "./ITHACAoutput/Offline", field_name+"omfield");
+                ITHACAstream::exportMatrix(coeffs, field_name+"coeffs", "eigen",
+                                       "./ITHACAoutput/Matrices/");
+                Vfield.clear();
+                Vmodes.clear();
+                Vomfield.clear();
+                liftFields.clear();
+                Info << "Lifted POD modes computed for field " << field_name << endl;
+            }
+            else
+            {
+                ITHACAPOD::getModes(Vfield, Vmodes, field_name, 0, 0, 0, nmodes, para->correctBC);
+                Eigen::MatrixXd coeffs = ITHACAutilities::getCoeffs(Vfield,
+                                            Vmodes, ncoeffs);
+                ITHACAstream::exportMatrix(coeffs, field_name+"coeffs", "eigen",
+                                       "./ITHACAoutput/Matrices/");
+                Vfield.clear();
+                Vmodes.clear();
+                Info << "POD modes computed for field " << field_name << endl;
+            }
+        }
+        
+        if (field_type == "scalar")
+        {      
+            if (lifted)
+            {
+                FatalErrorInFunction
+                    << "Lifted POD for scalar fields not implemented yet"
+                    << abort(FatalError);
+            }
+
+            ITHACAPOD::getModes(Sfield, Smodes, field_name, 0, 0, 0, nmodes, para->correctBC);
+            Eigen::MatrixXd coeffs = ITHACAutilities::getCoeffs(Sfield,
+                                            Smodes, ncoeffs);
+            ITHACAstream::exportMatrix(coeffs, field_name+"coeffs", "eigen",
+                                    "./ITHACAoutput/Matrices/");
+            Smodes.clear();
+            Sfield.clear();
+            Info << "POD modes computed for field " << field_name << endl;
+        }
     }
+
     Info << endl;
     Info << "End\n" << endl;
     return 0;

@@ -73,7 +73,7 @@ class tutorial06 : public SteadyNSTurb
         {
             Vector<double> inl(0, 0, 0);
             List<scalar> mu_now(3);
-            label BCind = 2;
+            label BCind = inletIndex(0,0);
 
             vectorField lift_1 (bcBasisFields[0].boundaryField()[BCind]);
             vectorField lift_2 (bcBasisFields[1].boundaryField()[BCind]);
@@ -147,7 +147,7 @@ class tutorial06 : public SteadyNSTurb
         {
             Vector<double> inl(0, 0, 0);
             List<scalar> mu_now(3);
-            label BCind = 2;
+            label BCind = inletIndex(0,0);
 
             vectorField lift_1 (bcBasisFields[0].boundaryField()[BCind]);
             vectorField lift_2 (bcBasisFields[1].boundaryField()[BCind]);
@@ -182,7 +182,7 @@ class tutorial06 : public SteadyNSTurb
         {
             Vector<double> inl(0, 0, 0);
             List<scalar> mu_now(3);
-            label BCind = 2;
+            label BCind = inletIndex(0,0);
 
             // Read the lift functions
             ITHACAstream::read_fields(bcBasisFields, U, "./lift/");
@@ -291,12 +291,6 @@ int main(int argc, char* argv[])
     Eigen::MatrixXd par_online = ITHACAstream::readMatrix(par_new);
     example.mu = ITHACAstream::readMatrix(par_offline);
 
-    // Set the inlet boundaries where we have parameterized boundary conditions
-    // The first column is the index of the inlet patch and the second column is the direction,
-    // x,y,z of the inlet velocity
-    example.inletIndex.resize(example.mu.cols()-1, 2);
-    example.inletIndex.setConstant(0);
-
     // create a list to store the time of different steps
     List<scalar> timeList;
     // The list for name of the steps
@@ -318,6 +312,22 @@ int main(int argc, char* argv[])
                             false);
     bool exportErrorField = para->ITHACAdict->lookupOrDefault<bool>("exportErrorField",
                             false);
+    label DirIndex = para->ITHACAdict->get<label>("DirIndex");
+    label DirComponent = para->ITHACAdict->get<label>("DirComponent");
+
+    Info<< "--------------------------------------------------------\n"
+        << "The index of the Dirichlet boundary is " << DirIndex << endl
+        << "The component of the Dirichlet boundary is " << DirComponent << endl;
+    Info<< "--------------------------------------------------------\n";
+
+    // Set the inlet boundaries where we have parameterized boundary conditions
+    // The first column is the index of the inlet patch and the second column is the direction,
+    // x,y,z of the inlet velocity
+    example.inletIndex.resize(example.mu.cols()-1, 2);
+    example.inletIndex(0,0) = DirIndex; // The index of the inlet patch
+    example.inletIndex(0,1) = DirComponent; // The direction of the inlet velocity
+    example.inletIndex(1,0) = DirIndex; // The index of the inlet patch
+    example.inletIndex(1,1) = DirComponent; // The direction of the inlet velocity
 
     // Read the lift functions
     ITHACAstream::read_fields(example.bcBasisFields, example.U, "./lift/");
@@ -326,13 +336,13 @@ int main(int argc, char* argv[])
     timeList.append(example._runTime().elapsedCpuTime());
     nameList.append("OfflineSolve");
 
+    Info<< "The Dirichlet boundary is treated with: " << example.bcMethod << endl;
+
     // Create the homogeneous set of snapshots for the velocity field
     // ITHACAutilities::normalizeFields(example.liftfield);
     // Homogenize the snapshots
     if (example.nonUniformbc && example.bcMethod == "lift")
-    {        
-        example.liftfield = example.bcBasisFields;
-        
+    {               
         Eigen::MatrixXd tmpmu(example.mu.rows(), example.mu.cols()-1);
         for (label i = 0; i < example.mu.rows(); i++)
         {
@@ -342,27 +352,41 @@ int main(int argc, char* argv[])
             }
         }
         // The shape of mu is different from the old code, so transpose it
+        example.coeffL2_lift = tmpmu.transpose();
         Eigen::MatrixXd muTranspose = tmpmu.transpose();
+
+        // Compute the lift velocity fields
+        Info<< "Lift velocity fields." << endl;
+        example.liftfield = example.bcBasisFields;
         example.computeLift(example.Ufield, example.liftfield, example.Uomfield, muTranspose);
 
         ITHACAPOD::getModes(example.Uomfield, example.Umodes, example._U().name(),
                             example.podex,
                             example.supex, 0, NmodesProject);
+        
+        example.coeffL2_U = ITHACAutilities::getCoeffs(example.Uomfield,
+                                            example.Umodes, NmodesU);
     }
     else if (example.bcMethod == "lift")
     {        
         example.liftfield = example.bcBasisFields;
-        
+        Info<< "Lift velocity fields." << endl;
         example.computeLift(example.Ufield, example.liftfield, example.Uomfield);
         ITHACAPOD::getModes(example.Uomfield, example.Umodes, example._U().name(),
                             example.podex,
                             example.supex, 0, NmodesProject);
+
+        example.coeffL2_U = ITHACAutilities::getCoeffs(example.Uomfield,
+                                            example.Umodes, NmodesU);
     }
     else 
     {
         ITHACAPOD::getModes(example.Ufield, example.Umodes, example._U().name(),
                             example.podex,
                             example.supex, 0, NmodesProject);
+
+        example.coeffL2_U = ITHACAutilities::getCoeffs(example.Ufield,
+                                            example.Umodes, NmodesU);
     }
     
     // Perform a POD decomposition for the velocity, the pressure and the eddy viscosity
@@ -375,15 +399,8 @@ int main(int argc, char* argv[])
     timeList.append(example._runTime().elapsedCpuTime());
     nameList.append("POD");
 
-    // Get coefficients for U, p and nut modes
-    Eigen::MatrixXd coeffL2_U = ITHACAutilities::getCoeffs(example.Uomfield,
-                                         example.Umodes, NmodesU);
-    Eigen::MatrixXd coeffL2_P = ITHACAutilities::getCoeffs(example.Pfield,
+    example.coeffL2_P = ITHACAutilities::getCoeffs(example.Pfield,
                                          example.Pmodes, NmodesP);
-    ITHACAstream::exportMatrix(coeffL2_U, "coeffL2_U", "eigen",
-                    "./ITHACAoutput/Matrices/");
-    ITHACAstream::exportMatrix(coeffL2_P, "coeffL2_P", "eigen",
-                    "./ITHACAoutput/Matrices/");
 
     // export the homogeneous velocity snapshots
     IFstream exUomfield1(fileName ("./ITHACAoutput/Offline/1/Uofield"));
@@ -435,8 +452,7 @@ int main(int argc, char* argv[])
     nameList.append("Project");
 
     // Create an object of the turbulent class
-    ReducedSteadyNSTurb pod_rbf(
-        example);
+    ReducedSteadyNSTurb pod_rbf(example);
     // We create the matrix rbfCoeff which will store the values of the interpolation results for the eddy viscosity field
     Eigen::MatrixXd rbfCoeff;
     rbfCoeff.resize(NmodesNUT, par_online.rows());
@@ -453,10 +469,6 @@ int main(int argc, char* argv[])
     // Perform an online solve for the new values of inlet velocities
     for (label k = 0; k < par_online.rows(); k++)
     {
-        pod_rbf.tauU.resize(2, 1);
-        pod_rbf.tauU(0, 0) = 0;
-        pod_rbf.tauU(1, 0) = 0;
-
         // Set value of the reduced viscosity and the penalty factor
         pod_rbf.nu = par_online(k, 0);
 
@@ -513,10 +525,15 @@ int main(int argc, char* argv[])
     example.onlineSolve("./ITHACAoutput/Online/");
     
     // Write error of online solutions
+    Info<< "Writing errors of online solutions" << endl;
+    Info<< "-----------------------------------------------------\n";
+    Info<< "The velocity error is: " << endl;
     Eigen::MatrixXd errL2U = ITHACAutilities::errorL2Rel(example.Ufield,
                                                             pod_rbf.uRecFields);
+    Info<< "The pressure error is: " << endl;
     Eigen::MatrixXd errL2P = ITHACAutilities::errorL2Rel(example.Pfield,
                                                             pod_rbf.pRecFields);
+    Info<< "The eddy viscosity error is: " << endl;
     Eigen::MatrixXd errL2NUT = ITHACAutilities::errorL2Rel(example.nutFields,
                                                             pod_rbf.nutRecFields);
     ITHACAstream::exportMatrix(errL2U, "errL2U", "eigen",
@@ -525,7 +542,18 @@ int main(int argc, char* argv[])
                                 "./ITHACAoutput/Online/ErrorsL2/");
     ITHACAstream::exportMatrix(errL2NUT, "errL2NUT", "eigen",
                                 "./ITHACAoutput/Online/ErrorsL2/");
-        
+    Info<< "----------------------------------------------------\n";
+
+    Info<< "The mean L2 error of the online solution is:\n"
+        << "-----------------------------------------------------\n";
+    Info<< "U: \t"
+        << errL2U.mean() << endl;
+    Info<< "P: \t"
+        << errL2P.mean() << endl;
+    Info<< "NUT: \t"
+        << errL2NUT.mean() << endl;
+    Info<< "-----------------------------------------------------\n";
+
     // Export errorfields
     // Perform an online solve for the new values of inlet velocities
     if (exportErrorField)

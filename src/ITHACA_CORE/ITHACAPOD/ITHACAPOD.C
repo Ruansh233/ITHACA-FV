@@ -155,8 +155,9 @@ void getModes(
 
         if (para->eigensolver == "spectra")
         {
-            Spectra::SymEigsSolver<Spectra::DenseSymMatProd<double>> es(op, nmodes, ncv);
-            std::cout << "Using Spectra EigenSolver " << std::endl;
+            Spectra::SymEigsSolver<double, Spectra::LARGEST_ALGE, Spectra::DenseSymMatProd<double >>
+            es(& op, nmodes, ncv);
+            Info << "Using Spectra EigenSolver " << endl;
             es.init();
             es.compute(Spectra::SortRule::LargestAlge);
             M_Assert(es.info() == Spectra::CompInfo::Successful,
@@ -167,7 +168,7 @@ void getModes(
 
         else if (para->eigensolver == "eigen")
         {
-            std::cout << "Using Eigen EigenSolver " << std::endl;
+            Info << "Using Eigen EigenSolver " << endl;
             esEg.compute(_corMatrix);
             M_Assert(esEg.info() == Eigen::Success,
                      "The Eigenvalue Decomposition did not succeed");
@@ -241,7 +242,8 @@ void getModes(
         {
             modesEigBC[i] = (SnapMatrixBC[i] * eigenVectoreig);
         }
-        std::cout << normFact << std::endl;
+        Info << endl << "####### Normalized Eigenvalues of " << snapshots[0].name() 
+            << " #######" << endl << normFact << endl << endl;
 
         for (label i = 0; i < nmodes; i++)
         {
@@ -469,7 +471,7 @@ void getModesMemoryEfficient(
         if (para->eigensolver == "spectra")
         {
             // Use Spectra solver for large eigenvalue problems
-            std::cout << "Using Spectra EigenSolver " << std::endl;
+            Info << "Using Spectra EigenSolver " << endl;
             Spectra::DenseSymMatProd<double> op(_corMatrix);
             Spectra::SymEigsSolver<Spectra::DenseSymMatProd<double >>
                     solver(op, nmodes, nSnaps);
@@ -484,7 +486,7 @@ void getModesMemoryEfficient(
         else if (para->eigensolver == "eigen")
         {
             // Use Eigen solver for smaller problems
-            std::cout << "Using Eigen EigenSolver " << std::endl;
+            Info << "Using Eigen EigenSolver " << endl;
             Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver(_corMatrix);
             M_Assert(solver.info() == Eigen::Success,
                      "Eigenvalue decomposition failed");
@@ -732,7 +734,7 @@ void getWeightedModes(
         es(op, nmodes, ncv);
         if (para->eigensolver == "spectra")
         {
-            std::cout << "Using Spectra EigenSolver " << std::endl;
+            Info << "Using Spectra EigenSolver " << endl;
             es.init();
             es.compute(Spectra::SortRule::LargestAlge);
             M_Assert(es.info() == Spectra::CompInfo::Successful,
@@ -743,7 +745,7 @@ void getWeightedModes(
 
         else if (para->eigensolver == "eigen")
         {
-            std::cout << "Using Eigen EigenSolver " << std::endl;
+            Info << "Using Eigen EigenSolver " << endl;
             esEg.compute(_corMatrix);
             M_Assert(esEg.info() == Eigen::Success,
                      "The Eigenvalue Decomposition did not succeed");
@@ -1401,7 +1403,7 @@ void getModes(
             }
         }
 
-        std::cout << std::endl;
+        Info << endl;
 
         for (label i = 1; i < snapshots.size(); i++)
         {
@@ -1422,9 +1424,9 @@ void getModes(
 
         if (para->eigensolver == "spectra")
         {
-            Spectra::SymEigsSolver< Spectra::DenseSymMatProd<double >>
-            es(op, nmodes, ncv);
-            std::cout << "Using Spectra EigenSolver " << std::endl;
+            Spectra::SymEigsSolver<double, Spectra::LARGEST_ALGE, Spectra::DenseSymMatProd<double >>
+            es(& op, nmodes, ncv);
+            Info << "Using Spectra EigenSolver " << endl;
             es.init();
             es.compute(Spectra::SortRule::LargestAlge);
             M_Assert(es.info() == Spectra::CompInfo::Successful,
@@ -1435,7 +1437,7 @@ void getModes(
 
         else if (para->eigensolver == "eigen")
         {
-            std::cout << "Using Eigen EigenSolver " << std::endl;
+            Info << "Using Eigen EigenSolver " << endl;
             esEg.compute(_corMatrix);
             M_Assert(esEg.info() == Eigen::Success,
                      "The Eigenvalue Decomposition did not succeed");
@@ -1753,9 +1755,9 @@ PtrList<GeometricField<Type, PatchField, GeoMesh >> DEIMmodes(
 
         if (para->eigensolver == "spectra")
         {
-            Spectra::SymEigsSolver< Spectra::DenseSymMatProd<double >>
-            es(op, nmodes, ncv);
-            std::cout << "Using Spectra EigenSolver " << std::endl;
+            Spectra::SymEigsSolver<double, Spectra::LARGEST_ALGE, Spectra::DenseSymMatProd<double >>
+            es(& op, nmodes, ncv);
+            Info << "Using Spectra EigenSolver " << endl;
             es.init();
             es.compute(Spectra::SortRule::LargestAlge);
             M_Assert(es.info() == Spectra::CompInfo::Successful,
@@ -1766,7 +1768,7 @@ PtrList<GeometricField<Type, PatchField, GeoMesh >> DEIMmodes(
 
         else if (para->eigensolver == "eigen")
         {
-            std::cout << "Using Eigen EigenSolver " << std::endl;
+            Info << "Using Eigen EigenSolver " << endl;
             esEg.compute(_corMatrix);
             M_Assert(esEg.info() == Eigen::Success,
                      "The Eigenvalue Decomposition did not succeed");
@@ -1936,9 +1938,9 @@ void getModes(
 
         if (para->eigensolver == "spectra")
         {
-            Spectra::SymEigsSolver<Spectra::DenseSymMatProd<double >>
-            es(op, nmodes, ncv);
-            std::cout << "Using Spectra EigenSolver " << std::endl;
+            Spectra::SymEigsSolver<double, Spectra::LARGEST_ALGE, Spectra::DenseSymMatProd<double >>
+            es(& op, nmodes, ncv);
+            Info << "Using Spectra EigenSolver " << endl;
             es.init();
             es.compute(Spectra::SortRule::LargestAlge);
             M_Assert(es.info() == Spectra::CompInfo::Successful,
@@ -1949,7 +1951,7 @@ void getModes(
 
         else if (para->eigensolver == "eigen")
         {
-            std::cout << "Using Eigen EigenSolver " << std::endl;
+            Info << "Using Eigen EigenSolver " << endl;
             esEg.compute(_corMatrix);
             M_Assert(esEg.info() == Eigen::Success,
                      "The Eigenvalue Decomposition did not succeed");
