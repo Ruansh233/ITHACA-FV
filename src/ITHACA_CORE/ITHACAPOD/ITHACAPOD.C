@@ -39,7 +39,7 @@ namespace ITHACAPOD
 
 template<class Type, template<class> class PatchField, class GeoMesh>
 void getNestedSnapshotMatrix(
-    PtrList<GeometricField<Type, PatchField, GeoMesh >> & snapshots,
+    PtrList<GeometricField<Type, PatchField, GeoMesh >>& snapshots,
     PtrList<GeometricField<Type, PatchField, GeoMesh >>& ModesGlobal,
     word fieldName,
     label Npar, label NnestedOut)
@@ -49,12 +49,14 @@ void getNestedSnapshotMatrix(
     SnapMatrixNested;
     label Nt = snapshots.size() / Npar;
     SnapMatrixNested.setSize(Nt);
+
     for (label i = 0; i < Npar; i++)
     {
         SnapMatrixNested[i].resize(Nt);
+
         for (label j = 0; j < Nt; j++)
         {
-            SnapMatrixNested[i].set(j, snapshots[j + Nt* i].clone());
+            SnapMatrixNested[i].set(j, snapshots[j + Nt * i].clone());
         }
     }
 
@@ -67,6 +69,7 @@ void getNestedSnapshotMatrix(
         getWeightedModes(SnapMatrixNested[i], UModesNested[i], 0, 0, 0,
                          NnestedOut);
     }
+
     for (label i = 0; i < Npar; i++)
     {
         y = UModesNested[i];
@@ -88,13 +91,14 @@ template void getNestedSnapshotMatrix(
 
 template<class Type, template<class> class PatchField, class GeoMesh>
 void getModes(
-    PtrList<GeometricField<Type, PatchField, GeoMesh >> & snapshots,
+    PtrList<GeometricField<Type, PatchField, GeoMesh >>& snapshots,
     PtrList<GeometricField<Type, PatchField, GeoMesh >>& modes,
     word fieldName, bool podex, bool supex, bool sup, label nmodes,
     bool correctBC)
 {
     ITHACAparameters* para(ITHACAparameters::getInstance());
-    constexpr bool check_vol = std::is_same<volMesh, GeoMesh>::value || std::is_same<surfaceMesh, GeoMesh>::value;
+    constexpr bool check_vol = std::is_same<volMesh, GeoMesh>::value
+                               || std::is_same<surfaceMesh, GeoMesh>::value;
     word PODkey = "POD_" + fieldName;
     word PODnorm = para->ITHACAdict->lookupOrDefault<word>(PODkey, "L2");
     M_Assert(PODnorm == "L2" ||
@@ -164,7 +168,6 @@ void getModes(
             eigenVectoreig = es.eigenvectors().real();
             eigenValueseig = es.eigenvalues().real();
         }
-
         else if (para->eigensolver == "eigen")
         {
             Info << "Using Eigen EigenSolver " << endl;
@@ -188,23 +191,27 @@ void getModes(
         //    eigenValueseig.real().array().abs().cwiseInverse().sqrt() ;
         //Eigen::MatrixXd modesEig = (SnapMatrix * eigenVectoreig) *
         //                           eigenValueseigLam.head(nmodes).asDiagonal();
-        Eigen::MatrixXd modesEig = (SnapMatrix* eigenVectoreig);
+        Eigen::MatrixXd modesEig = (SnapMatrix * eigenVectoreig);
         // Computing Normalization factors of the POD Modes
         Eigen::VectorXd V = ITHACAutilities::getMassMatrixFV(snapshots[0]);
         Eigen::MatrixXd normFact(nmodes, 1);
+
         for (label i = 0; i < nmodes; i++)
         {
             if (PODnorm == "L2")
             {
                 normFact(i, 0) = std::sqrt((modesEig.col(i).transpose() * V.asDiagonal() *
                                             modesEig.col(i))(0, 0));
-                if constexpr(check_vol){
-                        normFact(i, 0) = std::sqrt((modesEig.col(i).transpose() * V.asDiagonal() *
-                                            modesEig.col(i))(0, 0));
-                }
 
-                else if constexpr(std::is_same<pointMesh, GeoMesh>::value){
-                         normFact(i, 0) = std::sqrt((modesEig.col(i).transpose() * modesEig.col(i))(0, 0));
+                if constexpr(check_vol)
+                {
+                    normFact(i, 0) = std::sqrt((modesEig.col(i).transpose() * V.asDiagonal() *
+                                                modesEig.col(i))(0, 0));
+                }
+                else if constexpr(std::is_same<pointMesh, GeoMesh>::value)
+                {
+                    normFact(i, 0) = std::sqrt((modesEig.col(i).transpose() * modesEig.col(i))(0,
+                                               0));
                 }
 
                 if (Pstream::parRun())
@@ -213,11 +220,11 @@ void getModes(
                                       modesEig.col(i))(0, 0);
                 }
             }
-
             else if (PODnorm == "Frobenius")
             {
                 normFact(i, 0) = std::sqrt((modesEig.col(i).transpose() * modesEig.col(i))(0,
                                            0));
+
                 if (Pstream::parRun())
                 {
                     normFact(i, 0) = (modesEig.col(i).transpose() * modesEig.col(i))(0, 0);
@@ -234,6 +241,7 @@ void getModes(
         {
             normFact = normFact.cwiseSqrt();
         }
+
         List<Eigen::MatrixXd> modesEigBC;
         modesEigBC.resize(NBC);
 
@@ -253,6 +261,7 @@ void getModes(
                 modesEigBC[j].col(i) = modesEigBC[j].col(i).array() / normFact(i, 0);
             }
         }
+
         for (label i = 0; i < modes.size(); i++)
         {
             GeometricField<Type, PatchField, GeoMesh>  tmp2(snapshots[0].name(),
@@ -267,6 +276,7 @@ void getModes(
 
             modes.set(i, tmp2.clone());
         }
+
         eigenValueseig = eigenValueseig / eigenValueseig.sum();
         Eigen::VectorXd cumEigenValues(eigenValueseig);
 
@@ -274,6 +284,7 @@ void getModes(
         {
             cumEigenValues(j) += cumEigenValues(j - 1);
         }
+
         Info << "####### Saving the POD bases for " << snapshots[0].name() <<
              " #######" << endl;
 
@@ -286,6 +297,7 @@ void getModes(
         {
             ITHACAstream::exportFields(modes, "./ITHACAoutput/POD/", snapshots[0].name());
         }
+
         Eigen::saveMarketVector(eigenValueseig,
                                 "./ITHACAoutput/POD/Eigenvalues_" + snapshots[0].name(), para->precision,
                                 para->outytpe);
@@ -332,7 +344,7 @@ template<class Type, template<class> class PatchField, class GeoMesh>
 void getModesMemoryEfficient(
     GeometricField<Type, PatchField, GeoMesh>& templateField,
     word snapshotsPath,
-    PtrList<GeometricField<Type, PatchField, GeoMesh >> & modes,
+    PtrList<GeometricField<Type, PatchField, GeoMesh >>& modes,
     word fieldName,
     bool podex,
     bool supex,
@@ -473,7 +485,7 @@ void getModesMemoryEfficient(
             Info << "Using Spectra EigenSolver " << endl;
             Spectra::DenseSymMatProd<double> op(_corMatrix);
             Spectra::SymEigsSolver<Spectra::DenseSymMatProd<double >>
-                    solver(op, nmodes, nSnaps);
+            solver(op, nmodes, nSnaps);
             solver.init();
             solver.compute(Spectra::SortRule::LargestAlge);
             M_Assert(solver.info() == Spectra::CompInfo::Successful,
@@ -481,7 +493,6 @@ void getModesMemoryEfficient(
             eigenVectors = solver.eigenvectors().real();
             eigenValues = solver.eigenvalues().real();
         }
-
         else if (para->eigensolver == "eigen")
         {
             // Use Eigen solver for smaller problems
@@ -619,7 +630,7 @@ template void getModesMemoryEfficient
 (
     GeometricField<scalar, fvPatchField, volMesh>&,
     word,
-    PtrList<GeometricField<scalar, fvPatchField, volMesh >> &,
+    PtrList<GeometricField<scalar, fvPatchField, volMesh >>&,
     word,
     bool,
     bool,
@@ -634,7 +645,7 @@ template void getModesMemoryEfficient
 (
     GeometricField<vector, fvPatchField, volMesh>&,
     word,
-    PtrList<GeometricField<vector, fvPatchField, volMesh >> &,
+    PtrList<GeometricField<vector, fvPatchField, volMesh >>&,
     word,
     bool,
     bool,
@@ -648,7 +659,7 @@ template<class Type, template<class> class PatchField, class GeoMesh>
 void getMeanMemoryEfficient(
     GeometricField<Type, PatchField, GeoMesh>& templateField,
     word snapshotsPath,
-    autoPtr<GeometricField<Type, PatchField, GeoMesh >> & meanField,
+    autoPtr<GeometricField<Type, PatchField, GeoMesh >>& meanField,
     bool meanex)
 {
     // Count number of snapshots in directory (excluding 0/ and constant/)
@@ -658,12 +669,13 @@ void getMeanMemoryEfficient(
     Info << "Found " << nSnaps << " time directories" << endl;
 
     // Compute mean field
-    if(!meanex)
+    if (!meanex)
     {
         Info << "Computing the mean of snapshots" << endl;
         // Initialize mean field to zero
         *meanField = templateField * 0.;
-        for(int i = 0; i<nSnaps; i++)
+
+        for (int i = 0; i < nSnaps; i++)
         {
             // Read snapshot i
             GeometricField<Type, PatchField, GeoMesh> snapI =
@@ -686,7 +698,7 @@ template void getMeanMemoryEfficient
 (
     GeometricField<scalar, fvPatchField, volMesh>&,
     word snapshotsPath,
-    autoPtr<GeometricField<scalar, fvPatchField, volMesh >> &,
+    autoPtr<GeometricField<scalar, fvPatchField, volMesh >>&,
     bool
                   );
 
@@ -694,13 +706,13 @@ template void getMeanMemoryEfficient
 (
     GeometricField<vector, fvPatchField, volMesh>&,
     word snapshotsPath,
-    autoPtr<GeometricField<vector, fvPatchField, volMesh >> &,
+    autoPtr<GeometricField<vector, fvPatchField, volMesh >>&,
     bool
                   );
 
 template<class Type, template<class> class PatchField, class GeoMesh >
 void getWeightedModes(
-    PtrList<GeometricField<Type, PatchField, GeoMesh >> & snapshots,
+    PtrList<GeometricField<Type, PatchField, GeoMesh >>& snapshots,
     PtrList<GeometricField<Type, PatchField, GeoMesh >>& modes,
     word fieldName, bool podex, bool supex, bool sup, label nmodes,
     bool correctBC)
@@ -731,6 +743,7 @@ void getWeightedModes(
         Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> esEg;
         Spectra::SymEigsSolver<Spectra::DenseSymMatProd<double >>
         es(op, nmodes, ncv);
+
         if (para->eigensolver == "spectra")
         {
             Info << "Using Spectra EigenSolver " << endl;
@@ -741,7 +754,6 @@ void getWeightedModes(
             eigenVectoreig = es.eigenvectors().real();
             eigenValueseig = es.eigenvalues().real();
         }
-
         else if (para->eigensolver == "eigen")
         {
             Info << "Using Eigen EigenSolver " << endl;
@@ -759,7 +771,7 @@ void getWeightedModes(
             eigenValueseig.real().array().cwiseInverse().sqrt() ;
         Eigen::VectorXd eigenValueseigWeigted = eigenValueseig.head(
                 nmodes).real().array() ;
-        Eigen::MatrixXd modesEig = (SnapMatrix* eigenVectoreig) *
+        Eigen::MatrixXd modesEig = (SnapMatrix * eigenVectoreig) *
                                    eigenValueseigLam.head(nmodes).asDiagonal() *
                                    eigenValueseigWeigted.asDiagonal();
         List<Eigen::MatrixXd> modesEigBC;
@@ -770,6 +782,7 @@ void getWeightedModes(
             modesEigBC[i] = (SnapMatrixBC[i] * eigenVectoreig) *
                             eigenValueseigLam.asDiagonal() * eigenValueseigWeigted.asDiagonal();
         }
+
         for (label i = 0; i < modes.size(); i++)
         {
             GeometricField<Type, PatchField, GeoMesh> tmp2(snapshots[0].name(),
@@ -784,6 +797,7 @@ void getWeightedModes(
 
             modes.set(i, tmp2.clone());
         }
+
         eigenValueseig = eigenValueseig / eigenValueseig.sum();
         Eigen::VectorXd cumEigenValues(eigenValueseig);
 
@@ -791,6 +805,7 @@ void getWeightedModes(
         {
             cumEigenValues(j) += cumEigenValues(j - 1);
         }
+
         Info << "####### Saving the POD bases for " << snapshots[0].name() <<
              " #######" << endl;
 
@@ -804,6 +819,7 @@ void getWeightedModes(
         {
             ITHACAstream::exportFields(modes, "./ITHACAoutput/POD/", snapshots[0].name());
         }
+
         Eigen::saveMarketVector(eigenValueseig,
                                 "./ITHACAoutput/POD/Eigenvalues_" + snapshots[0].name(), para->precision,
                                 para->outytpe);
@@ -839,7 +855,7 @@ template void getWeightedModes(
 
 template<class Type, template<class> class PatchField, class GeoMesh>
 void getModesSVD(
-    PtrList<GeometricField<Type, PatchField, GeoMesh >> & snapshots,
+    PtrList<GeometricField<Type, PatchField, GeoMesh >>& snapshots,
     PtrList<GeometricField<Type, PatchField, GeoMesh >>& modes,
     word fieldName, bool podex, bool supex, bool sup, label nmodes,
     bool correctBC)
@@ -990,17 +1006,19 @@ Eigen::MatrixXd corMatrix(PtrList<volVectorField>& snapshots)
 
 /// Construct the Correlation Matrix for Vector Field
 template<>
-Eigen::MatrixXd corMatrix(List<Eigen::SparseMatrix<double >> &
+Eigen::MatrixXd corMatrix(List<Eigen::SparseMatrix<double >>&
                           snapshots)
 {
     Info << "########## Filling the correlation matrix for the matrix list ##########"
          << endl;
     Eigen::MatrixXd matrix(snapshots.size(), snapshots.size());
+
     for (label i = 0; i < snapshots.size(); i++)
     {
         for (label j = 0; j <= i; j++)
         {
             double res = 0;
+
             for (label k = 0; k < snapshots[i].cols(); k++)
             {
                 res += snapshots[i].col(k).dot(snapshots[j].col(k));
@@ -1052,7 +1070,7 @@ Eigen::MatrixXd corMatrix(List<Eigen::VectorXd>& snapshots)
 
 /// Export the Bases
 template<class Type, template<class> class PatchField, class GeoMesh>
-void exportBases(PtrList<GeometricField<Type, PatchField, GeoMesh >> & s,
+void exportBases(PtrList<GeometricField<Type, PatchField, GeoMesh >>& s,
                  PtrList<GeometricField<Type, PatchField, GeoMesh >>& bases,
                  word fieldName, bool sup)
 {
@@ -1150,7 +1168,7 @@ void exportcumEigenvalues(scalarField cumEigenvalues, fileName name,
 
 
 std::tuple<List<Eigen::SparseMatrix<double >>, List<Eigen::VectorXd >>
-DEIMmodes(List<Eigen::SparseMatrix<double >> & A,
+DEIMmodes(List<Eigen::SparseMatrix<double >>& A,
           List<Eigen::VectorXd>& b, label nmodesA, label nmodesB, word MatrixName)
 {
     ITHACAparameters* para(ITHACAparameters::getInstance());
@@ -1202,6 +1220,7 @@ DEIMmodes(List<Eigen::SparseMatrix<double >> & A,
         {
             esB.compute();
         }
+
         Info << "####### End of the POD for the Matrix List #######" << endl;
         Eigen::VectorXd eigenValueseigA;
         Eigen::MatrixXd eigenVectorseigA;
@@ -1239,14 +1258,17 @@ DEIMmodes(List<Eigen::SparseMatrix<double >> & A,
                  << endl;
             exit(0);
         }
+
         for (label i = 0; i < nmodesA; i++)
         {
             eigenValuesA[i] = eigenValueseigA(i) / eigenValueseigA.sum();
         }
+
         for (label i = 0; i < nmodesB; i++)
         {
             eigenValuesB[i] = eigenValueseigB(i) / eigenValueseigB.sum();
         }
+
         for (label i = 0; i < nmodesA; i++)
         {
             for (label k = 0; k < A.size(); k++)
@@ -1254,6 +1276,7 @@ DEIMmodes(List<Eigen::SparseMatrix<double >> & A,
                 eigenVectorA[i][k] = eigenVectorseigA(k, i);
             }
         }
+
         for (label i = 0; i < nmodesB; i++)
         {
             for (label k = 0; k < A.size(); k++)
@@ -1261,6 +1284,7 @@ DEIMmodes(List<Eigen::SparseMatrix<double >> & A,
                 eigenVectorB[i][k] = eigenVectorseigB(k, i);
             }
         }
+
         cumEigenValuesA[0] = eigenValuesA[0];
         cumEigenValuesB[0] = eigenValuesB[0];
 
@@ -1268,10 +1292,12 @@ DEIMmodes(List<Eigen::SparseMatrix<double >> & A,
         {
             cumEigenValuesA[i] = cumEigenValuesA[i - 1] + eigenValuesA[i];
         }
+
         for (label i = 1; i < nmodesB; i++)
         {
             cumEigenValuesB[i] = cumEigenValuesB[i - 1] + eigenValuesB[i];
         }
+
         Eigen::SparseMatrix<double> tmp_A;
         Eigen::VectorXd tmp_B;
 
@@ -1286,6 +1312,7 @@ DEIMmodes(List<Eigen::SparseMatrix<double >> & A,
 
             ModesA[i] = tmp_A;
         }
+
         for (label i = 0; i < nmodesB; i++)
         {
             tmp_B = eigenVectorB[i][0] * b[0];
@@ -1297,6 +1324,7 @@ DEIMmodes(List<Eigen::SparseMatrix<double >> & A,
 
             ModesB[i] = tmp_B;
         }
+
         ITHACAstream::exportList(eigenValuesA,
                                  "./ITHACAoutput/DEIM/" + MatrixName + "/", "eigenValuesA_" + MatrixName);
         ITHACAstream::exportList(cumEigenValuesA,
@@ -1311,6 +1339,7 @@ DEIMmodes(List<Eigen::SparseMatrix<double >> & A,
             ITHACAstream::SaveSparseMatrix(ModesA[i],
                                            "./ITHACAoutput/DEIM/" + MatrixName + "/", "A_" + MatrixName + name(i));
         }
+
         for (label i = 0; i < ModesB.size(); i++)
         {
             ITHACAstream::SaveDenseMatrix(ModesB[i],
@@ -1331,6 +1360,7 @@ DEIMmodes(List<Eigen::SparseMatrix<double >> & A,
                                           "./ITHACAoutput/DEIM/" + MatrixName + "/", "B_" + MatrixName + name(i));
         }
     }
+
     std::tuple <List<Eigen::SparseMatrix<double >>, List<Eigen::VectorXd >> tupla;
     tupla = std::make_tuple(ModesA, ModesB);
     return tupla;
@@ -1340,6 +1370,7 @@ void GrammSchmidt(Eigen::MatrixXd& Matrix)
 {
     Eigen::MatrixXd Ortho = Matrix;
     Ortho = Matrix;
+
     for (label i = 0; i <  Matrix.cols(); i++)
     {
         for (label k = 0; k < i; k++)
@@ -1347,7 +1378,7 @@ void GrammSchmidt(Eigen::MatrixXd& Matrix)
             double num = Ortho.col(k).transpose() * Matrix.col(i);
             double den = (Ortho.col(k).transpose() * Ortho.col(k));
             double fact = num / den;
-            Ortho.col(i) -= fact* Ortho.col(k) ;
+            Ortho.col(i) -= fact * Ortho.col(k) ;
         }
 
         Ortho.col(i).normalize();
@@ -1358,7 +1389,7 @@ void GrammSchmidt(Eigen::MatrixXd& Matrix)
 
 template<class Type, template<class> class PatchField, class GeoMesh>
 void getModes(
-    PtrList<GeometricField<Type, PatchField, GeoMesh >> & snapshots,
+    PtrList<GeometricField<Type, PatchField, GeoMesh >>& snapshots,
     PtrList<GeometricField<Type, PatchField, GeoMesh >>& modes,
     PtrList<volScalarField>& Volumes, word fieldName, bool podex, bool supex,
     bool sup, label nmodes, bool correctBC)
@@ -1433,7 +1464,6 @@ void getModes(
             eigenVectoreig = es.eigenvectors().real();
             eigenValueseig = es.eigenvalues().real();
         }
-
         else if (para->eigensolver == "eigen")
         {
             Info << "Using Eigen EigenSolver " << endl;
@@ -1449,7 +1479,7 @@ void getModes(
              endl;
         Eigen::VectorXd eigenValueseigLam =
             eigenValueseig.real().array().cwiseInverse().sqrt() ;
-        Eigen::MatrixXd modesEig = (SnapMatrix* eigenVectoreig) *
+        Eigen::MatrixXd modesEig = (SnapMatrix * eigenVectoreig) *
                                    eigenValueseigLam.asDiagonal();
         List<Eigen::MatrixXd> modesEigBC;
         modesEigBC.resize(NBC);
@@ -1459,6 +1489,7 @@ void getModes(
             modesEigBC[i] = (SnapMatrixBC[i] * eigenVectoreig) *
                             eigenValueseigLam.asDiagonal();
         }
+
         for (label i = 0; i < modes.size(); i++)
         {
             GeometricField<Type, PatchField, GeoMesh> tmp2(snapshots[0].name(),
@@ -1474,6 +1505,7 @@ void getModes(
 
             modes.set(i, tmp2.clone());
         }
+
         eigenValueseig = eigenValueseig / eigenValueseig.sum();
         Eigen::VectorXd cumEigenValues(eigenValueseig);
 
@@ -1481,6 +1513,7 @@ void getModes(
         {
             cumEigenValues(j) += cumEigenValues(j - 1);
         }
+
         Info << "####### Saving the POD bases for " << snapshots[0].name() << " #######"
              << endl;
         exportBases(modes, snapshots, fieldName, sup);
@@ -1518,7 +1551,7 @@ template void getModes(
 
 template<typename type_matrix>
 std::tuple<List<Eigen::SparseMatrix<double >>, List<Eigen::VectorXd >>
-DEIMmodes(PtrList<type_matrix> & MatrixList, label nmodesA, label nmodesB,
+DEIMmodes(PtrList<type_matrix>& MatrixList, label nmodesA, label nmodesB,
           word MatrixName)
 {
     ITHACAparameters* para(ITHACAparameters::getInstance());
@@ -1530,8 +1563,9 @@ DEIMmodes(PtrList<type_matrix> & MatrixList, label nmodesA, label nmodesB,
         M_Assert(nmodesA <= MatrixList.size() - 2
                  && nmodesB <= MatrixList.size() - 2,
                  "The number of requested modes cannot be bigger than the number of Snapshots - 2");
-        std::tuple<List<Eigen::SparseMatrix<double >>, List<Eigen::VectorXd >> snapshots =
-            Foam2Eigen::LFvMatrix2LSM(MatrixList);
+        std::tuple<List<Eigen::SparseMatrix<double >>, List<Eigen::VectorXd >> snapshots
+            =
+                Foam2Eigen::LFvMatrix2LSM(MatrixList);
         Eigen::MatrixXd corMatrixA = corMatrix(std::get<0>(snapshots));
         Eigen::MatrixXd corMatrixB = corMatrix(std::get<1>(snapshots));
         Eigen::VectorXd eigenValueseigA;
@@ -1564,6 +1598,7 @@ DEIMmodes(PtrList<type_matrix> & MatrixList, label nmodesA, label nmodesB,
                 M_Assert(esB.info() == Spectra::CompInfo::Successful,
                          "The Eigenvalue Decomposition did not succeed");
             }
+
             Info << "####### End of the POD decomposition for the Matrix List #######" <<
                  endl;
             eigenValueseigA = esA.eigenvalues().real();
@@ -1602,6 +1637,7 @@ DEIMmodes(PtrList<type_matrix> & MatrixList, label nmodesA, label nmodesB,
                                    nmodesB);
             eigenValueseigB = esEgB.eigenvalues().real().reverse().head(nmodesB);
         }
+
         Eigen::SparseMatrix<double> tmp_A;
         Eigen::VectorXd tmp_B;
 
@@ -1616,6 +1652,7 @@ DEIMmodes(PtrList<type_matrix> & MatrixList, label nmodesA, label nmodesB,
 
             ModesA[i] = tmp_A;
         }
+
         for (label i = 0; i < nmodesB; i++)
         {
             tmp_B = eigenVectorseigB(0, i) * std::get<1>(snapshots)[0];
@@ -1627,6 +1664,7 @@ DEIMmodes(PtrList<type_matrix> & MatrixList, label nmodesA, label nmodesB,
 
             ModesB[i] = tmp_B;
         }
+
         eigenValueseigA = eigenValueseigA / eigenValueseigA.sum();
         eigenValueseigB = eigenValueseigB / eigenValueseigB.sum();
         Eigen::VectorXd cumEigenValuesA(eigenValueseigA);
@@ -1636,20 +1674,24 @@ DEIMmodes(PtrList<type_matrix> & MatrixList, label nmodesA, label nmodesB,
         {
             cumEigenValuesA(j) += cumEigenValuesA(j - 1);
         }
+
         for (label j = 1; j < cumEigenValuesB.size(); ++j)
         {
             cumEigenValuesB(j) += cumEigenValuesB(j - 1);
         }
+
         for (label i = 0; i < ModesA.size(); i++)
         {
             ITHACAstream::SaveSparseMatrix(ModesA[i],
                                            "./ITHACAoutput/DEIM/" + MatrixName + "/", "A_" + MatrixName + name(i));
         }
+
         for (label i = 0; i < ModesB.size(); i++)
         {
             ITHACAstream::SaveDenseMatrix(ModesB[i],
                                           "./ITHACAoutput/DEIM/" + MatrixName + "/", "B_" + MatrixName + name(i));
         }
+
         Eigen::saveMarketVector(eigenValueseigA,
                                 "./ITHACAoutput/DEIM/" + MatrixName + "/eigenValuesA", para->precision,
                                 para->outytpe);
@@ -1677,6 +1719,7 @@ DEIMmodes(PtrList<type_matrix> & MatrixList, label nmodesA, label nmodesB,
                                           "./ITHACAoutput/DEIM/" + MatrixName + "/", "B_" + MatrixName + name(i));
         }
     }
+
     std::tuple <List<Eigen::SparseMatrix<double >>, List<Eigen::VectorXd >> tupla;
     tupla = std::make_tuple(ModesA, ModesB);
     return tupla;
@@ -1688,7 +1731,7 @@ DEIMmodes(PtrList<fvScalarMatrix>& MatrixList, label nmodesA,
           word MatrixName);
 
 template std::tuple<List<Eigen::SparseMatrix<double >>, List<Eigen::VectorXd >>
-DEIMmodes(PtrList<fvVectorMatrix> & MatrixList, label nmodesA,
+DEIMmodes(PtrList<fvVectorMatrix>& MatrixList, label nmodesA,
           label nmodesB,
           word MatrixName);
 
@@ -1706,6 +1749,7 @@ PtrList<GeometricField<Type, PatchField, GeoMesh >> DEIMmodes(
             " norm" << endl;
     PtrList<GeometricField<Type, fvPatchField, volMesh >> modes;
     bool correctBC = true;
+
     if (nmodes == 0 && para->eigensolver == "spectra")
     {
         nmodes = snapshots.size() - 2;
@@ -1764,7 +1808,6 @@ PtrList<GeometricField<Type, PatchField, GeoMesh >> DEIMmodes(
             eigenVectoreig = es.eigenvectors().real();
             eigenValueseig = es.eigenvalues().real();
         }
-
         else if (para->eigensolver == "eigen")
         {
             Info << "Using Eigen EigenSolver " << endl;
@@ -1784,26 +1827,28 @@ PtrList<GeometricField<Type, PatchField, GeoMesh >> DEIMmodes(
 
         Info << "####### End of the POD for " << snapshots[0].name() << " #######" <<
              endl;
-        Eigen::MatrixXd modesEig = (SnapMatrix* eigenVectoreig);
+        Eigen::MatrixXd modesEig = (SnapMatrix * eigenVectoreig);
         Eigen::VectorXd V = ITHACAutilities::getMassMatrixFV(snapshots[0]);
         Eigen::MatrixXd normFact(nmodes, 1);
+
         for (label i = 0; i < nmodes; i++)
         {
             if (PODnorm == "L2")
             {
                 normFact(i, 0) = std::sqrt((modesEig.col(i).transpose() * V.asDiagonal() *
                                             modesEig.col(i))(0, 0));
+
                 if (Pstream::parRun())
                 {
                     normFact(i, 0) = (modesEig.col(i).transpose() * V.asDiagonal() *
                                       modesEig.col(i))(0, 0);
                 }
             }
-
             else if (PODnorm == "Frobenius")
             {
                 normFact(i, 0) = std::sqrt((modesEig.col(i).transpose() * modesEig.col(i))(0,
                                            0));
+
                 if (Pstream::parRun())
                 {
                     normFact(i, 0) = (modesEig.col(i).transpose() * modesEig.col(i))(0, 0);
@@ -1820,6 +1865,7 @@ PtrList<GeometricField<Type, PatchField, GeoMesh >> DEIMmodes(
         {
             normFact = normFact.cwiseSqrt();
         }
+
         List<Eigen::MatrixXd> modesEigBC;
         modesEigBC.resize(NBC);
 
@@ -1838,6 +1884,7 @@ PtrList<GeometricField<Type, PatchField, GeoMesh >> DEIMmodes(
                 modesEigBC[j].col(i) = modesEigBC[j].col(i).array() / normFact(i, 0);
             }
         }
+
         for (label i = 0; i < modes.size(); i++)
         {
             GeometricField<Type, PatchField, GeoMesh>  tmp2(snapshots[0].name(),
@@ -1852,6 +1899,7 @@ PtrList<GeometricField<Type, PatchField, GeoMesh >> DEIMmodes(
 
             modes.set(i, tmp2.clone());
         }
+
         eigenValueseig = eigenValueseig / eigenValueseig.sum();
         Eigen::VectorXd cumEigenValues(eigenValueseig);
 
@@ -1859,6 +1907,7 @@ PtrList<GeometricField<Type, PatchField, GeoMesh >> DEIMmodes(
         {
             cumEigenValues(j) += cumEigenValues(j - 1);
         }
+
         Info << "####### Saving the POD bases for " << snapshots[0].name() <<
              " #######" << endl;
         ITHACAutilities::createSymLink("./ITHACAoutput/DEIM");
@@ -1868,6 +1917,7 @@ PtrList<GeometricField<Type, PatchField, GeoMesh >> DEIMmodes(
             ITHACAstream::exportSolution(modes[i], name(i + 1), "./ITHACAoutput/DEIM",
                                          fieldName);
         }
+
         Eigen::saveMarketVector(eigenValueseig,
                                 "./ITHACAoutput/DEIM/eigenValues_" + fieldName, para->precision,
                                 para->outytpe);
@@ -1880,6 +1930,7 @@ PtrList<GeometricField<Type, PatchField, GeoMesh >> DEIMmodes(
         Info << "Reading the existing modes" << endl;
         ITHACAstream::read_fields(modes, fieldName, "./ITHACAoutput/DEIM/");
     }
+
     return modes;
 }
 
@@ -1947,7 +1998,6 @@ void getModes(
             eigenVectoreig = es.eigenvectors().real();
             eigenValueseig = es.eigenvalues().real();
         }
-
         else if (para->eigensolver == "eigen")
         {
             Info << "Using Eigen EigenSolver " << endl;
@@ -1963,7 +2013,7 @@ void getModes(
              endl;
         Eigen::VectorXd eigenValueseigLam =
             eigenValueseig.real().array().cwiseInverse().abs().sqrt() ;
-        Eigen::MatrixXd modesEig = (SnapMatrix* eigenVectoreig) *
+        Eigen::MatrixXd modesEig = (SnapMatrix * eigenVectoreig) *
                                    eigenValueseigLam.asDiagonal();
         List<Eigen::MatrixXd> modesEigBC;
         modesEigBC.resize(NBC);
@@ -1979,6 +2029,7 @@ void getModes(
 
             modes.set(i, tmp2.clone());
         }
+
         eigenValueseig = eigenValueseig / eigenValueseig.sum();
         Eigen::VectorXd cumEigenValues(eigenValueseig);
 
@@ -1986,6 +2037,7 @@ void getModes(
         {
             cumEigenValues(j) += cumEigenValues(j - 1);
         }
+
         Info << "####### Saving the POD bases for " << snapshots[0].name() <<
              " #######" << endl;
 
@@ -1998,6 +2050,7 @@ void getModes(
         {
             ITHACAstream::exportFields(modes, "./ITHACAoutput/POD/", snapshots[0].name());
         }
+
         Eigen::saveMarketVector(eigenValueseig,
                                 "./ITHACAoutput/POD/Eigenvalues_" + snapshots[0].name(), para->precision,
                                 para->outytpe);
