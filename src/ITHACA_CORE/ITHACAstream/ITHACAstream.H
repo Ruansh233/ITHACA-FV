@@ -164,7 +164,7 @@ void exportTensor(Eigen::Tensor<T, 3 > tensor, word Name,
 /// @tparam     GeoMesh     volMesh or surfaceMesh.
 ///
 template<class Type, template<class> class PatchField, class GeoMesh>
-void read_fields(PtrList<GeometricField<Type, PatchField, GeoMesh >> &
+void read_fields(PtrList<GeometricField<Type, PatchField, GeoMesh >>&
                  Lfield, word Name,
                  fileName casename, int first_snap = 0, int n_snap = 0);
 
@@ -187,7 +187,7 @@ void read_fields(PtrList<GeometricField<Type, PatchField, GeoMesh >> &
 /// @tparam     GeoMesh     volMesh or surfaceMesh.
 ///
 template<class Type, template<class> class PatchField, class GeoMesh >
-void read_fields(PtrList<GeometricField<Type, PatchField, GeoMesh >> &
+void read_fields(PtrList<GeometricField<Type, PatchField, GeoMesh >>&
                  Lfield,
                  GeometricField<Type, PatchField, GeoMesh>& field,
                  fileName casename, int first_snap = 0, int n_snap = 0);
@@ -206,7 +206,7 @@ void read_fields(PtrList<GeometricField<Type, PatchField, GeoMesh >> &
 /// @tparam     GeoMesh     volMesh or surfaceMesh.
 ///
 template<class Type, template<class> class PatchField, class GeoMesh>
-void readMiddleFields(PtrList<GeometricField<Type, PatchField, GeoMesh >> &
+void readMiddleFields(PtrList<GeometricField<Type, PatchField, GeoMesh >>&
                       Lfield,
                       GeometricField<Type, PatchField, GeoMesh>& field,
                       fileName casename);
@@ -226,7 +226,7 @@ void readMiddleFields(PtrList<GeometricField<Type, PatchField, GeoMesh >> &
 ///
 template<class Type, template<class> class PatchField, class GeoMesh>
 void readConvergedFields(
-    PtrList<GeometricField<Type, PatchField, GeoMesh >> & Lfield,
+    PtrList<GeometricField<Type, PatchField, GeoMesh >>& Lfield,
     GeometricField<Type, PatchField, GeoMesh>& field,
     fileName casename);
 
@@ -244,7 +244,7 @@ void readConvergedFields(
 /// @tparam     GeoMesh     volMesh or surfaceMesh.
 ///
 template<class Type, template<class> class PatchField, class GeoMesh>
-void read_last_fields(PtrList<GeometricField<Type, PatchField, GeoMesh >> &
+void read_last_fields(PtrList<GeometricField<Type, PatchField, GeoMesh >>&
                       Lfield,
                       const GeometricField<Type, PatchField, GeoMesh>& field,
                       const fileName casename);
@@ -263,7 +263,7 @@ void read_last_fields(PtrList<GeometricField<Type, PatchField, GeoMesh >> &
 /// @tparam     GeoMesh     volMesh or surfaceMesh.
 ///
 template<class Type, template<class> class PatchField, class GeoMesh>
-void readLastFields(PtrList<GeometricField<Type, PatchField, GeoMesh >> &
+void readLastFields(PtrList<GeometricField<Type, PatchField, GeoMesh >>&
                     Lfield,
                     const GeometricField<Type, PatchField, GeoMesh>& field,
                     const fileName casename);
@@ -280,7 +280,7 @@ void readLastFields(PtrList<GeometricField<Type, PatchField, GeoMesh >> &
 /// @tparam     GeoMesh     volMesh or surfaceMesh.
 ///
 template<class Type, template<class> class PatchField, class GeoMesh>
-void exportFields(PtrList<GeometricField<Type, PatchField, GeoMesh >> &
+void exportFields(PtrList<GeometricField<Type, PatchField, GeoMesh >>&
                   field,
                   word folder, word fieldname);
 
@@ -458,7 +458,7 @@ void SaveSparseMatrixList(List<MatrixType>& MatrixList, word folder,
 /// @tparam     IND         number of matrix cols
 ///
 template <typename T, int Nrows, typename IND>
-void ReadSparseMatrixList(List<Eigen::SparseMatrix<T, Nrows, IND >> & m,
+void ReadSparseMatrixList(List<Eigen::SparseMatrix<T, Nrows, IND >>& m,
                           word folder, word MatrixName);
 
 //--------------------------------------------------------------------------
@@ -515,11 +515,11 @@ void writePoints(pointField points, fileName folder, fileName subfolder);
 void printProgress(double percentage);
 
 template<typename T>
-void save(const List<Eigen::SparseMatrix<T >> & MatrixList, word folder,
+void save(const List<Eigen::SparseMatrix<T >>& MatrixList, word folder,
           word MatrixName);
 
 template<typename T>
-void load(List<Eigen::SparseMatrix<T >> & MatrixList, word folder,
+void load(List<Eigen::SparseMatrix<T >>& MatrixList, word folder,
           word MatrixName);
 
 //--------------------------------------------------------------------------
@@ -790,7 +790,7 @@ void ITHACAstream::SaveDenseMatrixList(List<MatrixType>& MatrixList,
 
 template <typename T, int whatever, typename IND>
 void ITHACAstream::ReadSparseMatrixList(
-    List<Eigen::SparseMatrix<T, whatever, IND >> & m, word folder, word MatrixName)
+    List<Eigen::SparseMatrix<T, whatever, IND >>& m, word folder, word MatrixName)
 {
     int number_of_files = numberOfFiles(folder, MatrixName);
     std::cout << "Reading the Matrix " + folder + MatrixName << std::endl;

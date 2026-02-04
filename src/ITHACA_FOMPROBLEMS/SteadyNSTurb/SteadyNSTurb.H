@@ -45,7 +45,7 @@ SourceFiles
 #include "reductionProblem.H"
 #include "ITHACAstream.H"
 #include <iostream>
-#include "RBFinterpolator.H"
+#include "ithacaInterpolator.H"
 #include <datatable.h>
 #include <bspline.h>
 #include <bsplinebuilder.h>
@@ -80,8 +80,8 @@ class SteadyNSTurb: public steadyNS
         /// List of POD modes for eddy viscosity
         volScalarModes nutModes;
 
-        /// RBF interpolators for nut coefficient interpolation
-        std::vector<std::shared_ptr<RBFinterpolator>> rbfSplines;
+        /// Interpolators for nut coefficient interpolation
+        std::vector<std::shared_ptr<ithacaInterpolator>> rbfSplines;
 
         /// Turbulent viscosity matrix
         Eigen::MatrixXd btMatrix;
@@ -132,7 +132,7 @@ class SteadyNSTurb: public steadyNS
         Eigen::MatrixXd inputScaler;
 
         /// The way to compute the eddy viscosity snapshots
-        dictionary viscRBFdict;
+        dictionary viscDict;
 
         /// The type of RBF parameters to use
         word rbfParams;

@@ -85,7 +85,7 @@ SteadyNSTurb::SteadyNSTurb(int argc, char* argv[])
     bcMethod = ITHACAdict->lookupOrDefault<word>("bcMethod", "lift");
     M_Assert(bcMethod == "lift" || bcMethod == "penalty",
              "The BC method must be set to lift or penalty in ITHACAdict");
-    viscRBFdict = ITHACAdict->subDict("viscRBFdict");
+    viscDict = ITHACAdict->subDict("viscDict");
     para = ITHACAparameters::getInstance(mesh, runTime);
     offline = ITHACAutilities::check_off();
     podex = ITHACAutilities::check_pod();
@@ -216,6 +216,7 @@ Eigen::Tensor<double, 3> SteadyNSTurb::turbulenceTensor1_cache(label NUmodes,
     {
         // Cache only one row (j fixed)
         List<tmp<volVectorField>> lapRow(cSize);
+
         for (label k = 0; k < cSize; ++k)
         {
             lapRow[k] = fvc::laplacian(nutModes[j], L_U_SUPmodes[k]);
@@ -238,6 +239,7 @@ Eigen::Tensor<double, 3> SteadyNSTurb::turbulenceTensor1_cache(label NUmodes,
                                       "ct1_" + name(liftfield.size()) + "_" + name(NUmodes) + "_" + name(
                                           NSUPmodes) + "_" + name(nNutModes) + "_t");
     }
+
     return ct1Tensor;
 }
 
@@ -314,6 +316,7 @@ Eigen::Tensor<double, 3> SteadyNSTurb::turbulenceTensor2_cache(label NUmodes,
     {
         // Cache only one j-row
         List<tmp<volVectorField>> divRow(cSize);
+
         for (label k = 0; k < cSize; ++k)
         {
             divRow[k] = fvc::div(nutModes[j] * dev((fvc::grad(L_U_SUPmodes[k]))().T()));
@@ -324,7 +327,8 @@ Eigen::Tensor<double, 3> SteadyNSTurb::turbulenceTensor2_cache(label NUmodes,
             for (label k = 0; k < cSize; ++k)
             {
                 const volVectorField& divRowField = divRow[k]();
-                ct2Tensor(i, j, k) = fvc::domainIntegrate(L_U_SUPmodes[i] & divRowField).value();
+                ct2Tensor(i, j, k) = fvc::domainIntegrate(L_U_SUPmodes[i] &
+                                     divRowField).value();
             }
         }
     }
@@ -336,6 +340,7 @@ Eigen::Tensor<double, 3> SteadyNSTurb::turbulenceTensor2_cache(label NUmodes,
                                       "ct2_" + name(liftfield.size()) + "_" + name(NUmodes) + "_" + name(
                                           NSUPmodes) + "_" + name(nNutModes) + "_t");
     }
+
     return ct2Tensor;
 }
 
@@ -376,8 +381,8 @@ Eigen::Tensor<double, 3> SteadyNSTurb::turbulencePPETensor1_cache(label NUmodes,
 {
     label cSize = NUmodes + NSUPmodes + liftfield.size();
     Eigen::Tensor<double, 3> ct1PPETensor(NPmodes, nNutModes, cSize);
-
     List<tmp<volVectorField>> PmodesGrad(NPmodes);
+
     for (label i = 0; i < NPmodes; ++i)
     {
         PmodesGrad[i] = fvc::grad(Pmodes[i]);
@@ -387,6 +392,7 @@ Eigen::Tensor<double, 3> SteadyNSTurb::turbulencePPETensor1_cache(label NUmodes,
     {
         // Cache one row (j fixed)
         List<tmp<volVectorField>> lapRow(cSize);
+
         for (label k = 0; k < cSize; ++k)
         {
             lapRow[k] = fvc::laplacian(nutModes[j], L_U_SUPmodes[k]);
@@ -395,6 +401,7 @@ Eigen::Tensor<double, 3> SteadyNSTurb::turbulencePPETensor1_cache(label NUmodes,
         for (label i = 0; i < NPmodes; ++i)
         {
             const volVectorField& gradPi = PmodesGrad[i]();
+
             for (label k = 0; k < cSize; ++k)
             {
                 const volVectorField& lapRowField = lapRow[k]();
@@ -410,6 +417,7 @@ Eigen::Tensor<double, 3> SteadyNSTurb::turbulencePPETensor1_cache(label NUmodes,
                                       "ct1PPE_" + name(liftfield.size()) + "_" + name(NUmodes) + "_" + name(
                                           NSUPmodes) + "_" + name(NPmodes) + "_" + name(nNutModes) + "_t");
     }
+
     return ct1PPETensor;
 }
 
@@ -449,8 +457,8 @@ Eigen::Tensor<double, 3> SteadyNSTurb::turbulencePPETensor2_cache(label NUmodes,
 {
     label cSize = NUmodes + NSUPmodes + liftfield.size();
     Eigen::Tensor<double, 3> ct2PPETensor(NPmodes, nNutModes, cSize);
-
     List<tmp<volVectorField>> PmodesGrad(NPmodes);
+
     for (label i = 0; i < NPmodes; ++i)
     {
         PmodesGrad[i] = fvc::grad(Pmodes[i]);
@@ -460,6 +468,7 @@ Eigen::Tensor<double, 3> SteadyNSTurb::turbulencePPETensor2_cache(label NUmodes,
     {
         // Cache one row of div fields for this nutMode[j]
         List<tmp<volVectorField>> divLow(cSize);
+
         for (label k = 0; k < cSize; ++k)
         {
             divLow[k] = fvc::div(nutModes[j] * dev2((fvc::grad(L_U_SUPmodes[k]))().T()));
@@ -468,6 +477,7 @@ Eigen::Tensor<double, 3> SteadyNSTurb::turbulencePPETensor2_cache(label NUmodes,
         for (label i = 0; i < NPmodes; ++i)
         {
             const volVectorField& gradPi = PmodesGrad[i]();
+
             for (label k = 0; k < cSize; ++k)
             {
                 const volVectorField& divLowField = divLow[k]();
@@ -483,6 +493,7 @@ Eigen::Tensor<double, 3> SteadyNSTurb::turbulencePPETensor2_cache(label NUmodes,
                                       "ct2PPE_" + name(liftfield.size()) + "_" + name(NUmodes) + "_" + name(
                                           NSUPmodes) + "_" + name(NPmodes) + "_" + name(nNutModes) + "_t");
     }
+
     return ct2PPETensor;
 }
 
@@ -860,7 +871,7 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
     coeffL2 = ITHACAutilities::getCoeffs(nutFields,
                                          nutModes, nNutModes);
     
-    rbfParams = viscRBFdict.get<word>("rbfParams");
+    rbfParams = viscDict.get<word>("rbfParams");
     // coefficients for U and p modes are computed in the tutorial codes  
     if (rbfParams == "velLift")
     {
@@ -965,8 +976,8 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
 
     for (label i = 0; i < nNutModes; i++)
     {
-        // Create RBFinterpolator instance
-        rbfSplines[i] = std::make_shared<RBFinterpolator>(viscRBFdict);
+        // Create ithacaInterpolator instance
+        rbfSplines[i] = std::make_shared<ithacaInterpolator>(viscDict);
         
         // Prepare training data: X is parameter matrix (transposed), y is coefficient vector
         Eigen::MatrixXd X = mu.transpose();  // Now each row is a parameter sample
@@ -974,10 +985,10 @@ void SteadyNSTurb::projectPPE(fileName folder, label NU, label NP, label NSUP,
         
         rbfSplines[i]->fit(X, y);
         
-        Info << "Constructing RadialBasisFunction for mode " << i + 1 << endl;
+        Info << "Constructing ithacaInterpolator for mode " << i + 1 << endl;
     }
 
-    Info<< "Info on RBF interpolators for nut coefficients: "<< endl;
+    Info<< "Info on interpolators for nut coefficients: "<< endl;
     rbfSplines[0]->printInfo();
 }
 
@@ -1204,7 +1215,7 @@ void SteadyNSTurb::projectSUP(fileName folder, label NU, label NP, label NSUP,
     coeffL2 = ITHACAutilities::getCoeffs(nutFields,
                                          nutModes, nNutModes); 
     // coefficients for U and p modes are computed in the tutorial codes  
-    rbfParams = viscRBFdict.get<word>("rbfParams");
+    rbfParams = viscDict.get<word>("rbfParams");
     if (rbfParams == "velLift")
     {
         // check if the cols of the three matrices: coeffL2, coeffL2_U and coeffL2_lift, are the same,
@@ -1306,8 +1317,8 @@ void SteadyNSTurb::projectSUP(fileName folder, label NU, label NP, label NSUP,
     rbfSplines.resize(nNutModes);
     for (label i = 0; i < nNutModes; i++)
     {
-        // Create RBFinterpolator instance
-        rbfSplines[i] = std::make_shared<RBFinterpolator>(viscRBFdict);
+        // Create ithacaInterpolator instance
+        rbfSplines[i] = std::make_shared<ithacaInterpolator>(viscDict);
         
         // Prepare training data: X is parameter matrix (transposed), y is coefficient vector
         Eigen::MatrixXd X = mu.transpose();  // Now each row is a parameter sample
@@ -1315,8 +1326,8 @@ void SteadyNSTurb::projectSUP(fileName folder, label NU, label NP, label NSUP,
         
         rbfSplines[i]->fit(X, y);
         
-        Info << "Constructing RadialBasisFunction for mode " << i + 1 << endl;
+        Info << "Constructing ithacaInterpolator for mode " << i + 1 << endl;
     }
-    Info<< "Info on RBF interpolators for nut coefficients: "<< endl;
+    Info<< "Info on interpolators for nut coefficients: "<< endl;
     rbfSplines[0]->printInfo();
 }
